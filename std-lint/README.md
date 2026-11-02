@@ -38,7 +38,7 @@ module.exports = {
   env: { browser: true, es2020: true },
   globals: { STD: 'readonly' },
   extends: ['eslint:recommended'],
-  parserOptions: { ecmaVersion: 2020, sourceType: 'script' },
+  parserOptions: { ecmaVersion: 2020, sourceType: 'module' },
   rules: {
     'no-undef': 'error',
     'no-unused-vars': 'warn',
@@ -48,7 +48,20 @@ module.exports = {
 
 `package.json`에 `"type": "module"`이 있으면 `export default { ... }`로 작성하세요. 파일 확장자로 형식을 명시하려면 `stdLintConfig.cjs` 또는 `stdLintConfig.mjs`를 사용할 수 있습니다. 설정 파일은 실행되는 JavaScript이므로 신뢰할 수 있는 파일을 사용해야 합니다.
 
-설정에서 `parserOptions.ecmaVersion`과 `sourceType`을 프로젝트 Uglify가 지원하는 문법에 맞추세요. `env`는 사용 가능한 전역 이름 등을 정의하는 설정이며, Uglify 실행 성공까지 보장하지는 않습니다. 변환 후 ESLint의 기본 파서 설정은 최신 ECMAScript/module입니다. 구형 script를 검사하려면 예시처럼 명시하세요.
+설정에서 `parserOptions.ecmaVersion`과 `sourceType`을 대상 코드에 맞추세요. `env`는 사용 가능한 전역 이름 등을 정의하는 설정이며, Uglify 실행 성공까지 보장하지는 않습니다. 위 예제의 `sourceType: 'module'`은 대상 JS의 `import`/`export`를 허용합니다. 검사 실행기나 설정 파일이 `.cjs`여도 이 옵션을 사용할 수 있습니다. ES module은 엄격 모드로 검사되므로 기존 script의 동작까지 모두 같아지는 것은 아닙니다.
+
+일부 파일만 기존 script로 검사해야 하면 파일 범위에 맞춰 다음 `overrides`를 추가할 수 있습니다.
+
+```js
+overrides: [
+  {
+    files: ['legacy/**/*.js'],
+    parserOptions: { sourceType: 'script' },
+  },
+],
+```
+
+`sourceType: 'module'`은 검사 시 파싱 방식이며, 코드를 변환하거나 Uglify의 지원 문법을 바꾸지는 않습니다.
 
 `env`, `globals`, `rules`, `parserOptions`, `overrides`, `ignorePatterns`, `extends: ['eslint:recommended']`/`['eslint:all']` 등 기존 eslintrc 형식을 지원합니다. 최신 flat config 배열을 직접 받는 API는 아닙니다. 설정을 자동 병합하지 않으며, 파일별로 가장 가까운 설정 하나를 선택합니다. 해당 설정의 `extends`/`overrides`는 ESLint 방식으로 적용됩니다.
 

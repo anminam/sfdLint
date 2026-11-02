@@ -35,7 +35,7 @@ module.exports = {
   env: { browser: true, es2020: true },
   globals: { STD: 'readonly' },
   extends: ['eslint:recommended'],
-  parserOptions: { ecmaVersion: 2020, sourceType: 'script' },
+  parserOptions: { ecmaVersion: 2020, sourceType: 'module' },
   rules: {
     'no-undef': 'error',
     'no-unused-vars': 'warn',
@@ -50,6 +50,8 @@ module.exports = {
 - `rules`: 규칙별로 `off`, `warn`, `error`를 지정합니다.
 
 이 예제는 `.cjs`를 사용하므로 프로젝트의 `type: module` 여부와 관계없이 `module.exports`로 작성할 수 있습니다. `.mjs` 설정은 `export default { ... }`로 작성합니다.
+
+**실행기·설정 파일의 `.cjs`와 검사 대상의 문법은 별개입니다.** `node build.cjs`로 실행하더라도 대상 JS에 `import`/`export`가 있으면 `parserOptions.sourceType: 'module'`을 사용하세요. `script`로 설정하면 `import and export may appear only with sourceType: module` 오류가 납니다. 위 예제는 모듈 문법을 허용하도록 설정되어 있습니다.
 
 ### 3. 함수 하나로 검사하기 (CommonJS)
 
@@ -397,7 +399,7 @@ npm test
 npm run release
 ```
 
-테스트와 배포에도 npm 의존성 설치가 필요 없습니다. `npm run release`는 `dist/std-lint-2.0.0/std-lint/` 폴더와 `dist/std-lint-2.0.0.tar.gz`를 만듭니다. 복사해서 쓸 코드는 `std-lint/` 안에만 있습니다.
+테스트와 배포에도 npm 의존성 설치가 필요 없습니다. `npm run release`는 `dist/std-lint-2.0.1/std-lint/` 폴더와 `dist/std-lint-2.0.1.tar.gz`를 만듭니다. 복사해서 쓸 코드는 `std-lint/` 안에만 있습니다.
 
 ## Git으로 업데이트하기
 

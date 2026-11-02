@@ -12,6 +12,7 @@ Node.js `^22.23.4`, `^24.22.1`, `^26.12.1` 중 하나가 필요합니다. 권장
 | --- | --- | --- |
 | 함수 한 번으로 검사 (CommonJS) | `node std-lint/examples/one-call.cjs` | 0 |
 | 함수 한 번으로 검사 (ESM) | `node std-lint/examples/one-call.mjs` | 0 |
+| CJS 실행기로 import/export 검사 | `node std-lint/examples/one-call.cjs src/module.js src/module-helper.js` | 0 |
 | 함수 한 번으로 오류 알림 후 계속 진행 | `node std-lint/examples/one-call.cjs src/invalid.js` | 0 |
 | CommonJS 정상 검사 | `node std-lint/examples/commonjs.cjs` | 0 |
 | ESM 정상 검사 | `node std-lint/examples/esm.mjs` | 0 |
@@ -131,6 +132,7 @@ node std-lint/examples/json-report.cjs src/valid.js src/invalid.js src/syntax-er
 
 ## 6. 자주 막히는 부분
 
+- `import and export may appear only with sourceType: module`: 실행 파일이 `.cjs`인 것과 관계없이, 사용 중인 설정의 `parserOptions.sourceType`을 `'module'`로 지정하세요. 기존에 복사해 둔 설정은 직접 변경해야 합니다. 일부 파일에만 필요하면 ESLint `overrides`로 구분할 수 있습니다.
 - `CONFIG_NOT_FOUND`: `configFile`을 지정하거나 기본 이름의 설정을 대상 파일 상위에 두세요.
 - `ENOENT`: 파일 경로와 `cwd`를 확인하세요. 파일 배열에 폴더나 `src/*.js` 같은 glob을 넣으면 안 됩니다.
 - `FILE_NOT_LINTED`: ignore 설정 또는 ESLint 기본 제외 대상인지 확인하고, 제외할 파일은 입력 배열에서 빼세요.

@@ -3,7 +3,7 @@
   "reportSchemaVersion": 1,
   "reportSchema": "../../report.schema.json",
   "generator": {
-    "packageVersion": "2.0.0",
+    "packageVersion": "2.0.1",
     "eslintVersion": "10.14.0",
     "nodeVersion": "24.22.2"
   },
