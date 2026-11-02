@@ -9,8 +9,8 @@ try {
     failOnWarning: false,
   });
   console.log(formatReport(report));
-  process.exitCode = report.exitCode;
+  // report.exitCode는 알림용 분류 값이며 프로세스 종료 코드로 적용하지 않습니다.
 } catch (error) {
   console.error(error.message);
-  process.exitCode = error.exitCode || 2;
+  process.exitCode = 2; // 잘못된 API 호출 등 예상하지 못한 실행 오류
 }

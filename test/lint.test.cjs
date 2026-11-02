@@ -45,7 +45,7 @@ test('env/globals, undefined names, syntax errors and stable input order', async
   assert.equal(report.files[1].messages[0].line, 1);
   assert.deepEqual(report.files.map(file => file.filePath), [good, bad, syntax]);
   assert.match(api.formatReport(report), /bad\.js:1:1 error/);
-  assert.throws(() => api.assertPassed(report), error => error instanceof api.StdLintError && error.report === report);
+  assert.equal(api.assertPassed(report), report); // Legacy callers also continue after findings.
   assert.equal(await fs.readFile(syntax, 'utf8'), 'const = ;');
 });
 
@@ -145,10 +145,11 @@ test('invalid rule, malformed config and a directory cannot pass', async t => {
   assert.equal((await api.lintFiles([f.directory])).exitCode, 2);
 });
 
-test('checkFiles gates the next step and preserves warning/error policies in CJS and ESM', async t => {
+test('checkFiles returns findings and continues after syntax/rule/config/file issues in CJS and ESM', async t => {
   const f = await fixture(t);
   const good = await f.write('good.js', 'window.alert(STD);');
   const bad = await f.write('bad.js', 'notRegistered();');
+  const syntax = await f.write('syntax.js', 'const = ;');
   const warning = await f.write('warning.js', 'var unused = 1;');
   const esm = await import('../std-lint/index.mjs');
   assert.equal(esm.checkFiles, api.checkFiles);
@@ -156,17 +157,21 @@ test('checkFiles gates the next step and preserves warning/error policies in CJS
   const nextStep = report => { nextStepCalls++; return report; };
   const passed = await api.checkFiles([good]).then(nextStep);
   assert.equal(passed.passed, true);
-  await assert.rejects(esm.checkFiles([bad]).then(nextStep), error => {
-    assert(error instanceof api.StdLintError);
-    assert.equal(error.code, 'STD_LINT_FAILED');
-    assert.equal(error.exitCode, 1);
-    assert.equal(error.report.files[0].messages[0].ruleId, 'no-undef');
-    return true;
-  });
-  assert.equal(nextStepCalls, 1);
+  const invalid = await esm.checkFiles([bad]).then(nextStep);
+  assert.equal(invalid.exitCode, 1);
+  assert.equal(invalid.files[0].messages[0].ruleId, 'no-undef');
+  const parsed = await api.checkFiles([syntax]).then(nextStep);
+  assert.equal(parsed.summary.fatalErrorCount, 1);
+  assert.equal(parsed.passed, false);
   assert.equal((await api.checkFiles([warning])).summary.warningCount, 1);
-  await assert.rejects(api.checkFiles([warning], { failOnWarning: true }), { exitCode: 1 });
-  await assert.rejects(api.checkFiles([path.join(f.directory, 'missing.js')]), { exitCode: 2 });
+  assert.equal((await api.checkFiles([warning], { failOnWarning: true }).then(nextStep)).exitCode, 1);
+  const missing = await api.checkFiles([path.join(f.directory, 'missing.js')]).then(nextStep);
+  assert.equal(missing.exitCode, 2);
+  assert.equal(missing.issues[0].stage, 'read');
+  const config = await api.checkFiles([good], { configFile: 'absent.cjs' }).then(nextStep);
+  assert.equal(config.exitCode, 2);
+  assert.equal(config.issues[0].stage, 'config');
+  assert.equal(nextStepCalls, 6);
   await assert.rejects(api.checkFiles('invalid input'), TypeError);
 });
 
@@ -177,8 +182,8 @@ test('copied folder runs outside repository with only vendored dependencies', as
   await f.write('package.json', '{"type":"module"}');
   await f.write('stdLintConfig.js', 'export default { rules: { "no-undef": "error" } };');
   const source = await f.write('a.js', 'missingName();');
-  const runner = await f.write('run.cjs', `require('./tools/std-lint').lintFiles([${JSON.stringify(source)}]).then(r => { console.log(r.exitCode); process.exitCode = r.exitCode; });`);
-  assert.throws(() => execFileSync(process.execPath, [runner], { cwd: f.directory, env: { ...process.env, NODE_PATH: '', NODE_OPTIONS: '' } }), error => error.status === 1 && error.stdout.toString().trim() === '1');
-  const esmRunner = await f.write('run.mjs', `import { lintFiles } from ${JSON.stringify(pathToFileURL(path.join(target, 'index.mjs')).href)}; console.log((await lintFiles([${JSON.stringify(source)}])).exitCode);`);
+  const runner = await f.write('run.cjs', `require('./tools/std-lint').checkFiles([${JSON.stringify(source)}]).then(r => { console.log(r.exitCode); });`);
+  assert.equal(execFileSync(process.execPath, [runner], { cwd: f.directory, env: { ...process.env, NODE_PATH: '', NODE_OPTIONS: '' } }).toString().trim(), '1');
+  const esmRunner = await f.write('run.mjs', `import { checkFiles } from ${JSON.stringify(pathToFileURL(path.join(target, 'index.mjs')).href)}; console.log((await checkFiles([${JSON.stringify(source)}])).exitCode);`);
   assert.equal(execFileSync(process.execPath, [esmRunner], { cwd: f.directory }).toString().trim(), '1');
 });

@@ -1,6 +1,6 @@
 # std-lint
 
-Uglify 실행 전에 파일 경로 배열을 검사하는 Node.js 모듈입니다. `stdLintConfig.js`의 기존 ESLint 설정을 공식 `FlatCompat`로 변환하고 ESLint로 검사합니다.
+Uglify 실행 전에 파일 경로 배열을 검사하고 결과를 알리는 Node.js 모듈입니다. 문법·규칙 오류가 있어도 검사 결과를 반환하고 파이프라인을 계속 진행합니다. `stdLintConfig.js`의 기존 ESLint 설정을 공식 `FlatCompat`로 변환하고 ESLint로 검사합니다.
 
 ## 빠른 시작: 프로젝트에서 사용하기
 
@@ -53,7 +53,7 @@ module.exports = {
 
 ### 3. 함수 하나로 검사하기 (CommonJS)
 
-프로젝트 루트의 `build.cjs`에 다음처럼 작성하면 됩니다. **`checkFiles()` 한 번으로 검사하고, 실패하면 다음 단계 진행을 막습니다.**
+프로젝트 루트의 `build.cjs`에 다음처럼 작성하면 됩니다. **`checkFiles()`는 알림용이며, 문법·규칙 오류가 있어도 결과를 반환하고 `.then()`으로 진행합니다.**
 
 ```js
 const { checkFiles } = require('./tools/std-lint');
@@ -63,26 +63,26 @@ checkFiles(['src/app.js', 'src/common.js'], {
   configFile: './config/project-lint.cjs',
 })
   .then(report => {
-    console.log('검사 통과:', report.summary);
-    // 기존 Uglify 호출은 여기에 넣으세요.
+    console.log('검사 결과 알림:', report.summary);
+    // 문법·규칙 오류가 있어도 기존 Uglify 호출을 여기에 넣으면 실행됩니다.
   })
   .catch(error => {
     console.error(error.message);
-    process.exitCode = error.exitCode || 2;
+    process.exitCode = 2; // 검사 대상의 문법·규칙 위반에는 적용하지 않음
   });
 ```
 
-위 코드를 사용할 때는 `src/app.js`, `src/common.js`를 실제 검사할 파일 경로로 바꾸세요. 성공 시 `report`를 반환하고, 문법·규칙 오류나 파일·설정 실패 시 `StdLintError`를 던집니다. 오류의 `error.report`에서 전체 결과를 확인할 수 있습니다. 경고만 있으면 통과하며, `failOnWarning: true`를 추가하면 경고도 실패로 처리합니다.
+위 코드를 사용할 때는 `src/app.js`, `src/common.js`를 실제 검사할 파일 경로로 바꾸세요. 문법·규칙 오류는 `report.files[].messages`, 파일·설정 실패는 `report.issues`에 담아 반환합니다. 이 결과 때문에 `catch`로 이동하지 않습니다. 잘못된 API 인자 같은 호출 오류는 `catch`에서 처리합니다.
 
 ESM에서는 `import { checkFiles } from './tools/std-lint/index.mjs'`로 불러와 `await checkFiles(files, options)`를 호출하면 됩니다. 실행 가능한 예제: [CommonJS](std-lint/examples/one-call.cjs) / [ESM](std-lint/examples/one-call.mjs).
 
-### 4. 결과 출력과 실패 처리를 직접 구성하기
+### 4. 결과 출력 형식을 직접 구성하기
 
-콘솔 출력 형식과 중단 처리를 직접 구성하려면 다음 `build.cjs` 예제를 사용하세요.
+콘솔에 줄·열·규칙·메시지를 출력하고 다음 단계로 진행하려면 다음 `build.cjs` 예제를 사용하세요.
 
 ```js
 const path = require('node:path');
-const { lintFiles, formatReport, assertPassed } = require('./tools/std-lint');
+const { lintFiles, formatReport } = require('./tools/std-lint');
 
 async function main() {
   // 검사할 파일 경로 배열입니다. 폴더나 glob은 넣지 않습니다.
@@ -95,20 +95,19 @@ async function main() {
   });
 
   console.log(formatReport(report));
-  assertPassed(report); // 오류가 있으면 예외를 던져 아래 단계 중단
 
   // 기존 Uglify 호출을 이 위치로 옮기고 files를 전달하세요.
   // await runExistingUglify(files);
-  console.log('검사 통과: 다음 빌드 단계를 실행할 수 있습니다.');
+  console.log('검사 결과 알림 완료: 다음 빌드 단계로 진행합니다.');
 }
 
 main().catch(error => {
-  if (error.code !== 'STD_LINT_FAILED') console.error(error.message);
-  process.exitCode = error.exitCode || 2;
+  console.error(error.message); // API 호출 오류 등만 처리
+  process.exitCode = 2; // 검사 대상의 문법·규칙 위반에는 적용하지 않음
 });
 ```
 
-파일이 여러 개면 `['src/app.js', 'src/common.js']`처럼 배열에 추가하면 됩니다. `lintFiles()`는 검사 결과를 반환하며, **`assertPassed(report)`를 호출해야 검사 실패 시 다음 단계가 중단**됩니다. `report.passed`를 직접 확인해 분기하는 방법도 있습니다.
+파일이 여러 개면 `['src/app.js', 'src/common.js']`처럼 배열에 추가하면 됩니다. `lintFiles()`와 `checkFiles()` 모두 검사 결과를 반환합니다. 결과를 출력한 후 그대로 다음 단계로 진행하세요. 알림 목적의 파이프라인에서는 `assertPassed()`를 호출하거나 `report.exitCode`를 프로세스 종료 코드로 적용하지 마세요.
 
 ### 5. 실행하고 결과 확인하기
 
@@ -128,7 +127,7 @@ node build.cjs
 
 ```text
 std-lint: PASS | files 1, linted 1, errors 0, warnings 0, failed 0
-검사 통과: 다음 빌드 단계를 실행할 수 있습니다.
+검사 결과 알림 완료: 다음 빌드 단계로 진행합니다.
 ```
 
 이제 `src/app.js`를 다음처럼 바꾸고 다시 실행해 보세요.
@@ -137,11 +136,12 @@ std-lint: PASS | files 1, linted 1, errors 0, warnings 0, failed 0
 window.alert(notRegistered);
 ```
 
-파일 경로는 실행 환경에 따라 달라집니다. 이 경우 종료 코드는 1이고, `assertPassed()` 아래의 Uglify 단계는 실행되지 않습니다.
+파일 경로는 실행 환경에 따라 달라집니다. 검사 결과에는 `passed: false`, `exitCode: 1`이 기록되지만 예제 프로세스는 정상 종료(0)하고 다음 단계도 실행됩니다. Uglify 자체가 문법 오류를 처리하지 못하는 경우는 기존 Uglify 코드에서 별도로 처리해야 합니다.
 
 ```text
 /.../src/app.js:1:14 error 'notRegistered' is not defined. (no-undef)
 std-lint: FAIL | files 1, linted 1, errors 1, warnings 0, failed 0
+검사 결과 알림 완료: 다음 빌드 단계로 진행합니다.
 ```
 
 ## import로 사용하기 (ESM)
@@ -151,7 +151,7 @@ std-lint: FAIL | files 1, linted 1, errors 1, warnings 0, failed 0
 ```js
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { lintFiles, formatReport, assertPassed } from './tools/std-lint/index.mjs';
+import { lintFiles, formatReport } from './tools/std-lint/index.mjs';
 
 const projectRoot = fileURLToPath(new URL('.', import.meta.url));
 
@@ -164,15 +164,14 @@ async function main() {
   });
 
   console.log(formatReport(report));
-  assertPassed(report);
 
   // await runExistingUglify(files);
-  console.log('검사 통과: 다음 빌드 단계를 실행할 수 있습니다.');
+  console.log('검사 결과 알림 완료: 다음 빌드 단계로 진행합니다.');
 }
 
 main().catch(error => {
-  if (error.code !== 'STD_LINT_FAILED') console.error(error.message);
-  process.exitCode = error.exitCode || 2;
+  console.error(error.message); // API 호출 오류 등만 처리
+  process.exitCode = 2; // 검사 대상의 문법·규칙 위반에는 적용하지 않음
 });
 ```
 
@@ -180,7 +179,7 @@ main().catch(error => {
 node build.mjs
 ```
 
-## 이름·경로·실패 조건 바꾸기
+## 이름·경로·결과 분류 옵션 바꾸기
 
 호출 코드의 옵션만 수정하면 됩니다. 설정 이름과 경로가 바뀌어도 모듈 내부를 수정할 필요가 없습니다.
 
@@ -196,23 +195,23 @@ const report = await lintFiles(files, {
 | --- | --- |
 | `cwd` | 입력 파일과 `configFile`의 상대 경로 기준. 생략하면 `process.cwd()` |
 | `configFile` | 사용할 설정의 이름·경로. 절대 경로도 가능 |
-| `failOnWarning` | `false`면 경고만 있을 때 통과(기본값). `true`면 경고도 실패 |
+| `failOnWarning` | `true`면 경고도 report의 passed=false/exitCode=1로 분류. 예외나 빌드 중단은 발생하지 않음 |
 
 `configFile`을 생략하면 각 대상 파일의 폴더부터 상위 폴더로 올라가며 가장 가까운 `stdLintConfig.js`, `.cjs`, `.mjs`를 찾습니다. 프로젝트 빌드에서는 `configFile`을 명시하는 것을 권장합니다.
 
 ## 결과를 프로그램에서 사용하기
 
-`checkFiles()`의 성공 결과와 `lintFiles()`의 결과는 같은 형식이며, JSON으로 저장할 수 있는 객체입니다. 실패 시에도 결과가 필요하면 `checkFiles()`의 `error.report`를 사용하거나 `lintFiles()`를 호출하세요.
+`checkFiles()`와 `lintFiles()`는 같은 형식의 JSON 직렬화 가능한 결과를 반환합니다. 오류가 있어도 `.then(report)` 또는 `await`의 반환값에서 결과를 읽습니다.
 
 | 항목 | 의미 |
 | --- | --- |
-| `report.passed` | 검사 통과 여부 |
-| `report.exitCode` | 0: 통과, 1: 문법·규칙 위반, 2: 파일·설정·검사 실행 실패 |
+| `report.passed` | 검사 기준 충족 여부. false여도 다음 단계는 계속 진행 |
+| `report.exitCode` | 알림용 분류: 0: 기준 충족, 1: 문법·규칙 위반, 2: 파일·설정·검사 실행 실패. 프로세스 종료 코드와 별개 |
 | `report.summary` | 검사 파일 수, 오류 수, 경고 수 |
 | `report.files[].messages` | 파일별 줄·열·규칙·메시지 |
 | `report.issues` | 없는 파일, 잘못된 설정 등 실행 실패 정보 |
 
-`formatReport(report)`는 콘솔에 출력할 문자열을 만들고, `assertPassed(report)`는 실패 시 `StdLintError`를 던집니다. 라이브러리 자체가 프로세스를 종료하지는 않으며 위 예제의 `catch`에서 종료 코드를 설정합니다. [반환 객체 전체 예시](std-lint/README.md#반환-형식)
+`formatReport(report)`는 콘솔에 출력할 문자열을 만듭니다. 출력의 PASS/FAIL은 검사 기준에 따른 표시이며 빌드 중단을 의미하지 않습니다. 라이브러리는 검사 결과를 이유로 프로세스를 종료하지 않습니다. [반환 객체 전체 예시](std-lint/README.md#반환-형식)
 
 ### 실제 report는 이렇게 나옵니다
 
@@ -289,9 +288,9 @@ std-lint: FAIL | files 1, linted 1, errors 1, warnings 0, failed 0
 | 경고 + failOnWarning: true | false | 1 | warningCount와 messages |
 | 파일·설정·검사 실행 실패 | false | 2 | issues와 failedFileCount |
 
-`status: 'linted'`는 검사를 수행했다는 뜻입니다. 통과 여부는 `passed`로 확인하세요. `fatalErrorCount`는 `errorCount`에 포함되므로 두 수를 더하지 않습니다.
+`status: 'linted'`는 검사를 수행했다는 뜻입니다. `passed`는 검사 기준 충족 여부이며 빌드 진행 여부와 별개입니다. `fatalErrorCount`는 `errorCount`에 포함되므로 두 수를 더하지 않습니다.
 
-`checkFiles()`의 실패 결과도 다음처럼 꺼내 쓸 수 있습니다.
+`checkFiles()`의 오류 알림도 다음처럼 반환값에서 확인합니다.
 
 ```js
 const { checkFiles } = require('./tools/std-lint');
@@ -299,12 +298,11 @@ const { checkFiles } = require('./tools/std-lint');
 checkFiles(['src/app.js'], { configFile: './config/project-lint.cjs' })
   .then(report => {
     console.log(JSON.stringify(report, null, 2));
-    // 통과한 경우에만 다음 빌드 단계를 실행하세요.
+    // 문법·규칙 오류가 있어도 다음 빌드 단계로 진행합니다.
   })
   .catch(error => {
-    if (error.report) console.error(JSON.stringify(error.report, null, 2));
-    else console.error(error.message); // 잘못된 API 인자 등의 오류
-    process.exitCode = error.exitCode || 2;
+    console.error(error.message); // 잘못된 API 인자 등의 호출 오류
+    process.exitCode = 2; // 검사 대상의 문법·규칙 위반에는 적용하지 않음
   });
 ```
 
@@ -326,7 +324,7 @@ node std-lint/examples/one-call.mjs src/invalid.js
 | --- | --- |
 | 예제별 명령과 예상 결과, 문제 해결 | [예제 실행 가이드](std-lint/examples/README.md) |
 | 전체 API와 설정 동작 | [사용 매뉴얼](std-lint/README.md) |
-| 함수 한 번 호출로 검사와 실패 처리 | [one-call.cjs](std-lint/examples/one-call.cjs) / [one-call.mjs](std-lint/examples/one-call.mjs) |
+| 함수 한 번 호출로 검사 결과 알림 | [one-call.cjs](std-lint/examples/one-call.cjs) / [one-call.mjs](std-lint/examples/one-call.mjs) |
 | `require()` / `import` 예제 | [commonjs.cjs](std-lint/examples/commonjs.cjs) / [esm.mjs](std-lint/examples/esm.mjs) |
 | 기존 Uglify 함수를 전달하는 연결 예제 | [pipeline.cjs](std-lint/examples/pipeline.cjs) |
 | JSON 결과 출력 | [json-report.cjs](std-lint/examples/json-report.cjs) |
@@ -341,7 +339,7 @@ npm test
 npm run release
 ```
 
-테스트와 배포에도 npm 의존성 설치가 필요 없습니다. `npm run release`는 `dist/std-lint-1.1.0/std-lint/` 폴더와 `dist/std-lint-1.1.0.tar.gz`를 만듭니다. 복사해서 쓸 코드는 `std-lint/` 안에만 있습니다.
+테스트와 배포에도 npm 의존성 설치가 필요 없습니다. `npm run release`는 `dist/std-lint-2.0.0/std-lint/` 폴더와 `dist/std-lint-2.0.0.tar.gz`를 만듭니다. 복사해서 쓸 코드는 `std-lint/` 안에만 있습니다.
 
 ## Git으로 업데이트하기
 

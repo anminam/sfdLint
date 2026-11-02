@@ -184,14 +184,14 @@ function formatReport(report) {
   return lines.join('\n');
 }
 
+/** @deprecated Compatibility helper; informational results must not stop builds. */
 function assertPassed(report) {
-  if (!report.passed) throw new StdLintError(report);
   return report;
 }
 
-/** One-call pipeline check: return a passing report or reject with StdLintError. */
+/** Informational check: return all findings without rejecting the pipeline. */
 async function checkFiles(filePaths, options = {}) {
-  return assertPassed(await lintFiles(filePaths, options));
+  return lintFiles(filePaths, options);
 }
 
 module.exports = { checkFiles, lintFiles, formatReport, assertPassed, StdLintError };

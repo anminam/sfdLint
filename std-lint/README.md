@@ -56,7 +56,7 @@ module.exports = {
 
 ## 함수 하나로 검사하기: checkFiles
 
-`checkFiles(filePaths, options)`는 `lintFiles()`와 같은 인자를 받습니다. 검사에 통과하면 결과 객체를 반환하고, 실패하면 `StdLintError`를 던집니다. 콘솔 출력이나 프로세스 종료는 호출자가 처리합니다.
+`checkFiles(filePaths, options)`는 `lintFiles()`와 같은 인자를 받고 결과 객체를 반환합니다. **알림 목적이므로 문법·규칙 오류가 있어도 예외를 던지지 않고 다음 단계로 진행합니다.** 파일 읽기·설정 실패도 `report.issues`에 기록합니다. 콘솔 출력은 호출자가 처리합니다.
 
 ```js
 const { checkFiles } = require('./tools/std-lint');
@@ -66,23 +66,23 @@ checkFiles(['src/app.js'], {
   configFile: './config/project-lint.cjs',
 })
   .then(report => {
-    console.log('검사 통과:', report.summary);
+    console.log('검사 결과 알림:', report.summary);
     // 기존 Uglify 호출을 여기에 넣으세요.
   })
   .catch(error => {
     console.error(error.message);
-    process.exitCode = error.exitCode || 2;
+    process.exitCode = 2; // 검사 대상의 문법·규칙 위반에는 적용하지 않음
   });
 ```
 
-ESM에서는 `import { checkFiles } from './tools/std-lint/index.mjs'`로 불러와 `await checkFiles(files, options)`를 사용합니다. 실패 결과는 `error.report`, 종료 코드는 `error.exitCode`로 확인할 수 있습니다. 기본적으로 경고만 있으면 통과하고 `failOnWarning: true`이면 경고도 실패입니다. 잘못된 API 인자는 `TypeError`를 던집니다.
+ESM에서는 `import { checkFiles } from './tools/std-lint/index.mjs'`로 불러와 `await checkFiles(files, options)`를 사용합니다. 오류가 있어도 반환된 `report`에서 결과를 확인합니다. `failOnWarning: true`는 경고를 report의 `passed: false`, `exitCode: 1`로 분류할 뿐 예외나 빌드 중단을 발생시키지 않습니다. 잘못된 API 인자는 `TypeError`를 던집니다.
 
 실행 예제: [one-call.cjs](examples/one-call.cjs) / [one-call.mjs](examples/one-call.mjs).
 
-## 결과 처리를 직접 구성하기: CommonJS / Uglify 파이프라인
+## 결과 출력과 다음 단계 연결: CommonJS / Uglify 파이프라인
 
 ```js
-const { lintFiles, formatReport, assertPassed } = require('./tools/std-lint');
+const { lintFiles, formatReport } = require('./tools/std-lint');
 
 async function build(files) {
   const report = await lintFiles(files, {
@@ -92,7 +92,6 @@ async function build(files) {
   });
 
   console.log(formatReport(report));
-  assertPassed(report); // 실패하면 StdLintError를 던져 다음 단계 중단
 
   // 이 지점에 기존 Uglify 호출 코드를 넣습니다.
   // await runExistingUglify(files);
@@ -101,24 +100,23 @@ async function build(files) {
 
 build(['src/app.js', 'src/common.js']).catch(error => {
   console.error(error.message);
-  process.exitCode = error.exitCode || 2;
+  process.exitCode = 2; // 검사 대상의 문법·규칙 위반에는 적용하지 않음
 });
 ```
 
-`lintFiles()` 자체는 검사 실패로 예외를 던지지 않습니다. 결과를 기록하거나 CI에 전달할 수 있도록 report를 반환합니다. 잘못된 API 인자에는 `TypeError`를 던집니다. 중단 여부를 강제하려면 `assertPassed()`를 호출하거나 `report.passed`를 확인해야 합니다.
+`lintFiles()`와 `checkFiles()`는 검사 오류를 report로 반환합니다. 결과를 기록한 뒤 Uglify를 계속 호출하면 됩니다. 예제에서는 `report.exitCode`를 프로세스 종료 코드로 적용하지 않습니다. Uglify 자체의 파싱·실행 오류는 Uglify 호출 코드에서 별도로 처리해야 합니다.
 
 ## ESM
 
 로컬 폴더의 ESM import는 진입 파일을 지정합니다.
 
 ```js
-import { lintFiles, formatReport, assertPassed } from './tools/std-lint/index.mjs';
+import { lintFiles, formatReport } from './tools/std-lint/index.mjs';
 
 const report = await lintFiles(['src/app.js'], {
   configFile: './stdLintConfig.js',
 });
 console.log(formatReport(report));
-assertPassed(report);
 ```
 
 ## 입력 및 설정 탐색
@@ -178,9 +176,11 @@ assertPassed(report);
 | 1 | 문법/규칙 오류, 또는 `failOnWarning: true`일 때 경고 |
 | 2 | 파일 읽기 실패, 설정 실패, 검사 누락, 검사 실행 실패 |
 
-여러 종류의 실패가 함께 있으면 2가 우선입니다. 라이브러리는 프로세스를 종료하지 않으며, 호출자가 `process.exitCode = report.exitCode` 등을 적용합니다.
+여러 종류의 문제가 함께 있으면 2가 우선입니다. `exitCode`는 결과 분류 값이며 프로세스를 종료시키지 않습니다. 알림 목적의 사용에서는 `process.exitCode = report.exitCode`를 적용하지 마세요. PASS/FAIL 표기도 검사 기준 충족 여부를 뜻하며 다음 단계 실행을 막지 않습니다.
 
-`formatReport(report)`는 경로·줄·열·심각도·규칙·메시지와 전체 요약을 담은 문자열입니다. ESLint 원본 메시지는 영어로 표시됩니다. `assertPassed(report)`가 던지는 `StdLintError`에는 `code: 'STD_LINT_FAILED'`, `exitCode`, `report`가 포함됩니다.
+`formatReport(report)`는 경로·줄·열·심각도·규칙·메시지와 전체 요약을 담은 문자열입니다. ESLint 원본 메시지는 영어로 표시됩니다.
+
+기존 `assertPassed(report)`는 report를 그대로 반환하는 deprecated 호환 함수로 유지하며, 2.0.0부터는 오류가 있어도 예외를 던지지 않습니다. 새 코드에서는 호출할 필요가 없습니다. 기존 `StdLintError` 클래스도 export는 유지하지만 검사 결과 때문에 이 오류를 생성하거나 던지지 않습니다. 1.1.0에서 `checkFiles()`의 실패를 catch로 받던 코드는 2.0.0부터 반환된 `report`에서 읽도록 바꿔야 합니다.
 
 ## 업데이트와 고지
 

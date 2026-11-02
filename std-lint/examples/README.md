@@ -12,18 +12,19 @@ Node.js `^22.23.4`, `^24.22.1`, `^26.12.1` 중 하나가 필요합니다. 권장
 | --- | --- | --- |
 | 함수 한 번으로 검사 (CommonJS) | `node std-lint/examples/one-call.cjs` | 0 |
 | 함수 한 번으로 검사 (ESM) | `node std-lint/examples/one-call.mjs` | 0 |
-| 함수 한 번으로 오류 시 중단 | `node std-lint/examples/one-call.cjs src/invalid.js` | 1 |
+| 함수 한 번으로 오류 알림 후 계속 진행 | `node std-lint/examples/one-call.cjs src/invalid.js` | 0 |
 | CommonJS 정상 검사 | `node std-lint/examples/commonjs.cjs` | 0 |
 | ESM 정상 검사 | `node std-lint/examples/esm.mjs` | 0 |
-| 선언되지 않은 변수 | `node std-lint/examples/commonjs.cjs src/invalid.js` | 1 |
-| 문법 오류 | `node std-lint/examples/commonjs.cjs src/syntax-error.js` | 1 |
+| 선언되지 않은 변수 알림 | `node std-lint/examples/commonjs.cjs src/invalid.js` | 0 |
+| 문법 오류 알림 | `node std-lint/examples/commonjs.cjs src/syntax-error.js` | 0 |
 | 미사용 변수 경고 | `node std-lint/examples/commonjs.cjs src/warning.js` | 0 |
-| 여러 파일 검사 | `node std-lint/examples/commonjs.cjs src/valid.js src/invalid.js` | 1 |
-| 없는 파일 | `node std-lint/examples/commonjs.cjs src/missing.js` | 2 |
+| 여러 파일 검사 | `node std-lint/examples/commonjs.cjs src/valid.js src/invalid.js` | 0 |
+| 없는 파일 알림 | `node std-lint/examples/commonjs.cjs src/missing.js` | 0 |
 | 정상 파이프라인 실행 흐름 | `node std-lint/examples/pipeline.cjs` | 0 |
-| 오류로 다음 단계 중단 | `node std-lint/examples/pipeline.cjs src/invalid.js` | 1 |
+| 오류 알림 후 다음 단계 실행 | `node std-lint/examples/pipeline.cjs src/invalid.js` | 0 |
+| 문법 오류 알림 후 다음 단계 실행 | `node std-lint/examples/pipeline.cjs src/syntax-error.js` | 0 |
 
-경고만 있으면 기본적으로 통과합니다. 경고도 실패로 처리하려면 예제 코드의 `failOnWarning`을 `true`로 바꾸세요.
+알림 목적이므로 위 예제는 검사 오류를 출력한 뒤 정상 종료(0)합니다. `report.exitCode`는 결과 분류이며 프로세스 종료 코드로 적용하지 않습니다. `failOnWarning: true`도 결과 분류만 바꾸고 다음 단계는 계속 진행합니다.
 
 예제 스크립트는 `cwd`를 `examples` 폴더로 고정합니다. 따라서 명령 뒤에 넣는 `src/invalid.js`도 **examples 기준** 경로입니다. 실제 프로젝트 파일은 절대 경로로 전달하거나, 코드를 복사한 뒤 `cwd`를 프로젝트 루트로 바꾸세요.
 
@@ -38,7 +39,7 @@ std-lint: FAIL | files 1, linted 1, errors 1, warnings 0, failed 0
 
 ## 3. 프로젝트에 연결하기
 
-간단히 연결하려면 **`checkFiles(files, options)` 한 번**을 호출하세요. 성공 시 결과를 반환하고 실패 시 예외를 던지므로, 검사 이후의 빌드 단계는 성공한 경우에만 실행하면 됩니다. 아래처럼 결과 출력과 중단 처리를 직접 구성하는 API도 제공합니다.
+간단히 연결하려면 **`checkFiles(files, options)` 한 번**을 호출하세요. 문법·규칙 오류가 있어도 결과를 반환하므로, 결과를 출력한 뒤 그대로 다음 빌드 단계를 실행하면 됩니다.
 
 실행 가능한 단일 호출 코드: [CommonJS](one-call.cjs) / [ESM](one-call.mjs).
 
@@ -61,7 +62,7 @@ my-project/
 
 ```js
 const path = require('node:path');
-const { lintFiles, formatReport, assertPassed } = require('./tools/std-lint');
+const { lintFiles, formatReport } = require('./tools/std-lint');
 
 async function main() {
   // 배열 원소를 절대 경로로 만들어 검사와 Uglify의 경로 기준을 맞춥니다.
@@ -73,7 +74,6 @@ async function main() {
   });
 
   console.log(formatReport(report));
-  assertPassed(report);
 
   // 이 지점에서 기존 Uglify 함수에 files를 전달합니다.
   // await yourExistingUglify(files);
@@ -81,11 +81,11 @@ async function main() {
 
 main().catch(error => {
   console.error(error.message);
-  process.exitCode = error.exitCode || 2;
+  process.exitCode = 2; // 검사 대상의 문법·규칙 위반에는 적용하지 않음
 });
 ```
 
-실제 Uglify 패키지는 이 모듈에 포함하지 않습니다. [pipeline.cjs](pipeline.cjs)는 기존 압축 함수를 인자로 받아 검사에 통과한 경우에만 호출하는 예제입니다. 이 파일을 직접 실행하면 흐름을 확인하는 대체 함수가 호출됩니다.
+실제 Uglify 패키지는 이 모듈에 포함하지 않습니다. [pipeline.cjs](pipeline.cjs)는 검사 결과를 알린 뒤 문법·규칙 오류가 있어도 기존 압축 함수를 호출합니다. 이 파일을 직접 실행하면 흐름을 확인하는 대체 함수가 호출됩니다. 실제 Uglify 자체의 파싱·실행 오류는 해당 호출 코드에서 별도로 처리하세요.
 
 ## 4. 설정 파일 이름과 경로 바꾸기
 
@@ -106,18 +106,18 @@ const report = await lintFiles(files, {
 
 실제 실행으로 얻은 전체 JSON과 콘솔 출력은 [report 결과 예시](../REPORT_EXAMPLES.md)를 참고하세요. 정상·규칙 오류·문법 오류·경고·파일 읽기 실패·설정 실패를 각각 볼 수 있습니다.
 
-`checkFiles()`는 성공 시 결과를 반환하고 실패 시 예외를 던집니다. `lintFiles()`는 실패해도 결과 객체를 반환하므로 `report.passed`로 분기하거나 `assertPassed(report)`로 예외를 던져 다음 단계를 막으세요.
+`checkFiles()`와 `lintFiles()`는 모두 검사 결과를 반환합니다. 오류도 반환값의 `messages`와 `issues`에서 확인합니다. 알림 목적에서는 `assertPassed()`를 호출하거나 `report.exitCode`를 프로세스 종료 코드에 적용하지 마세요.
 
 | 값 | 용도 |
 | --- | --- |
-| `report.passed` | 다음 빌드 단계 진행 여부 |
-| `report.exitCode` | 0: 성공, 1: 검사 위반, 2: 실행/설정 실패 |
+| `report.passed` | 검사 기준 충족 여부. false여도 빌드는 계속 진행 |
+| `report.exitCode` | 결과 분류: 0: 기준 충족, 1: 검사 위반, 2: 실행/설정 실패. 프로세스 종료 코드와 별개 |
 | `report.summary` | 파일 수, 오류 수, 경고 수 |
 | `report.files[].messages` | 파일별 줄·열·규칙·메시지 |
 | `report.issues` | 파일 읽기 실패, 설정 오류 등 |
 | `formatReport(report)` | 사람이 읽는 콘솔 출력 |
 
-JSON 파일로 저장하려면 다음처럼 실행합니다. 기본 JSON 예제는 오류 파일을 검사하므로 **JSON을 저장한 뒤 종료 코드 1을 반환**하는 것이 정상입니다.
+JSON 파일로 저장하려면 다음처럼 실행합니다. 기본 JSON 예제는 오류 파일을 검사하므로 **JSON의 exitCode는 1이지만 프로세스는 정상 종료(0)**합니다.
 
 ```sh
 node std-lint/examples/json-report.cjs > lint-report.json
