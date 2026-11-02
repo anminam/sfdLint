@@ -7,7 +7,7 @@ async function main() {
   const files = process.argv.slice(2);
   const report = await lintFiles(files.length ? files : ['src/valid.js'], {
     cwd: __dirname,
-    configFile: './config/company-lint.cjs',
+    configFile: './config/project-lint.cjs',
     failOnWarning: false,
   });
   console.log(formatReport(report));

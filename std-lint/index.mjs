@@ -1,4 +1,4 @@
 import api from './index.cjs';
 
-export const { lintFiles, formatReport, assertPassed, StdLintError } = api;
+export const { checkFiles, lintFiles, formatReport, assertPassed, StdLintError } = api;
 export default api;

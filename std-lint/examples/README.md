@@ -10,6 +10,9 @@ Node.js `^22.23.4`, `^24.22.1`, `^26.12.1` 중 하나가 필요합니다. 권장
 
 | 목적 | 명령 | 예상 종료 코드 |
 | --- | --- | --- |
+| 함수 한 번으로 검사 (CommonJS) | `node std-lint/examples/one-call.cjs` | 0 |
+| 함수 한 번으로 검사 (ESM) | `node std-lint/examples/one-call.mjs` | 0 |
+| 함수 한 번으로 오류 시 중단 | `node std-lint/examples/one-call.cjs src/invalid.js` | 1 |
 | CommonJS 정상 검사 | `node std-lint/examples/commonjs.cjs` | 0 |
 | ESM 정상 검사 | `node std-lint/examples/esm.mjs` | 0 |
 | 선언되지 않은 변수 | `node std-lint/examples/commonjs.cjs src/invalid.js` | 1 |
@@ -22,7 +25,7 @@ Node.js `^22.23.4`, `^24.22.1`, `^26.12.1` 중 하나가 필요합니다. 권장
 
 경고만 있으면 기본적으로 통과합니다. 경고도 실패로 처리하려면 예제 코드의 `failOnWarning`을 `true`로 바꾸세요.
 
-예제 스크립트는 `cwd`를 `examples` 폴더로 고정합니다. 따라서 명령 뒤에 넣는 `src/invalid.js`도 **examples 기준** 경로입니다. 실제 회사 파일은 절대 경로로 전달하거나, 코드를 복사한 뒤 `cwd`를 회사 프로젝트 루트로 바꾸세요.
+예제 스크립트는 `cwd`를 `examples` 폴더로 고정합니다. 따라서 명령 뒤에 넣는 `src/invalid.js`도 **examples 기준** 경로입니다. 실제 프로젝트 파일은 절대 경로로 전달하거나, 코드를 복사한 뒤 `cwd`를 프로젝트 루트로 바꾸세요.
 
 검사 결과는 다음 형식입니다. 절대 경로는 실행한 컴퓨터마다 다릅니다.
 
@@ -31,24 +34,28 @@ Node.js `^22.23.4`, `^24.22.1`, `^26.12.1` 중 하나가 필요합니다. 권장
 std-lint: FAIL | files 1, linted 1, errors 1, warnings 0, failed 0
 ```
 
-`src/syntax-error.js`는 검사 동작을 확인하기 위해 의도적으로 문법 오류를 넣은 파일입니다. 실행 대상 JS나 회사의 빌드 파일 목록에 포함하지 마세요.
+`src/syntax-error.js`는 검사 동작을 확인하기 위해 의도적으로 문법 오류를 넣은 파일입니다. 실행 대상 JS나 프로젝트의 빌드 파일 목록에 포함하지 마세요.
 
-## 3. 회사 프로젝트에 연결하기
+## 3. 프로젝트에 연결하기
 
-다음처럼 배치할 수 있습니다. 회사별 설정은 업데이트 시 교체하는 `tools/std-lint` 밖에 둡니다.
+간단히 연결하려면 **`checkFiles(files, options)` 한 번**을 호출하세요. 성공 시 결과를 반환하고 실패 시 예외를 던지므로, 검사 이후의 빌드 단계는 성공한 경우에만 실행하면 됩니다. 아래처럼 결과 출력과 중단 처리를 직접 구성하는 API도 제공합니다.
+
+실행 가능한 단일 호출 코드: [CommonJS](one-call.cjs) / [ESM](one-call.mjs).
+
+다음처럼 배치할 수 있습니다. 프로젝트별 설정은 업데이트 시 교체하는 `tools/std-lint` 밖에 둡니다.
 
 ```text
 my-project/
 ├── build.cjs
 ├── config/
-│   └── company-lint.cjs
+│   └── project-lint.cjs
 ├── src/
 │   └── app.js
 └── tools/
     └── std-lint/          ← vendor를 포함한 폴더 전체 복사
 ```
 
-`config/company-lint.cjs`는 [설정 예제](config/company-lint.cjs)를 참고해 작성합니다. 이름과 위치는 자유롭게 지정할 수 있습니다.
+`config/project-lint.cjs`는 [설정 예제](config/project-lint.cjs)를 참고해 작성합니다. 이름과 위치는 자유롭게 지정할 수 있습니다.
 
 `build.cjs`에 다음 코드를 넣고 표시된 지점에서 기존 Uglify 함수를 호출합니다.
 
@@ -61,7 +68,7 @@ async function main() {
   const files = ['src/app.js'].map(file => path.resolve(__dirname, file));
   const report = await lintFiles(files, {
     cwd: __dirname,
-    configFile: './config/company-lint.cjs',
+    configFile: './config/project-lint.cjs',
     failOnWarning: false,
   });
 
@@ -93,11 +100,11 @@ const report = await lintFiles(files, {
 
 `configFile` 상대 경로는 `cwd` 기준입니다. 절대 경로도 가능합니다. 생략하면 대상 파일의 상위 폴더에서 기본 이름 `stdLintConfig.js`, `.cjs`, `.mjs`를 찾습니다.
 
-설정의 `env`는 browser/node 같은 실행 환경을, `globals`는 회사 전역 이름을, `rules`는 검사 규칙과 심각도를 지정합니다. `parserOptions`는 허용하는 JavaScript 문법 버전을 지정합니다. CommonJS 설정은 `module.exports = { ... }`, ESM 설정은 `export default { ... }`로 작성합니다.
+설정의 `env`는 browser/node 같은 실행 환경을, `globals`는 프로젝트 전역 이름을, `rules`는 검사 규칙과 심각도를 지정합니다. `parserOptions`는 허용하는 JavaScript 문법 버전을 지정합니다. CommonJS 설정은 `module.exports = { ... }`, ESM 설정은 `export default { ... }`로 작성합니다.
 
 ## 5. 결과를 프로그램에서 사용하기
 
-`lintFiles()`는 실패해도 결과 객체를 반환합니다. `report.passed`로 분기하거나 `assertPassed(report)`로 예외를 던져 다음 단계를 막으세요.
+`checkFiles()`는 성공 시 결과를 반환하고 실패 시 예외를 던집니다. `lintFiles()`는 실패해도 결과 객체를 반환하므로 `report.passed`로 분기하거나 `assertPassed(report)`로 예외를 던져 다음 단계를 막으세요.
 
 | 값 | 용도 |
 | --- | --- |

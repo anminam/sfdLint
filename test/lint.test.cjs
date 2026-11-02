@@ -145,6 +145,31 @@ test('invalid rule, malformed config and a directory cannot pass', async t => {
   assert.equal((await api.lintFiles([f.directory])).exitCode, 2);
 });
 
+test('checkFiles gates the next step and preserves warning/error policies in CJS and ESM', async t => {
+  const f = await fixture(t);
+  const good = await f.write('good.js', 'window.alert(STD);');
+  const bad = await f.write('bad.js', 'notRegistered();');
+  const warning = await f.write('warning.js', 'var unused = 1;');
+  const esm = await import('../std-lint/index.mjs');
+  assert.equal(esm.checkFiles, api.checkFiles);
+  let nextStepCalls = 0;
+  const nextStep = report => { nextStepCalls++; return report; };
+  const passed = await api.checkFiles([good]).then(nextStep);
+  assert.equal(passed.passed, true);
+  await assert.rejects(esm.checkFiles([bad]).then(nextStep), error => {
+    assert(error instanceof api.StdLintError);
+    assert.equal(error.code, 'STD_LINT_FAILED');
+    assert.equal(error.exitCode, 1);
+    assert.equal(error.report.files[0].messages[0].ruleId, 'no-undef');
+    return true;
+  });
+  assert.equal(nextStepCalls, 1);
+  assert.equal((await api.checkFiles([warning])).summary.warningCount, 1);
+  await assert.rejects(api.checkFiles([warning], { failOnWarning: true }), { exitCode: 1 });
+  await assert.rejects(api.checkFiles([path.join(f.directory, 'missing.js')]), { exitCode: 2 });
+  await assert.rejects(api.checkFiles('invalid input'), TypeError);
+});
+
 test('copied folder runs outside repository with only vendored dependencies', async t => {
   const f = await fixture(t);
   const target = path.join(f.directory, 'tools', 'std-lint');

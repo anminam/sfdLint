@@ -25,9 +25,9 @@ node --version
 node -p "process.execPath"
 ```
 
-저장소의 `.nvmrc`는 24.22.2를 지정합니다. nvm을 사용하는 개발 환경에서는 `nvm install` 후 `nvm use`로 선택할 수 있습니다. 회사에서 오프라인 설치가 필요하면 승인된 경로로 해당 Node.js 배포본을 받아 설치하세요. 이 모듈 폴더에는 Node.js 실행 파일이 포함되어 있지 않습니다.
+저장소의 `.nvmrc`는 24.22.2를 지정합니다. nvm을 사용하는 개발 환경에서는 `nvm install` 후 `nvm use`로 선택할 수 있습니다. 프로젝트에서 오프라인 설치가 필요하면 승인된 경로로 해당 Node.js 배포본을 받아 설치하세요. 이 모듈 폴더에는 Node.js 실행 파일이 포함되어 있지 않습니다.
 
-`package.json`의 `engines.node`에도 지원 범위를 명시했습니다. **폴더를 복사해서 실행하는 방식에서는 engines가 실행을 자동으로 막지 않으므로**, 회사 빌드 환경의 Node.js 버전을 직접 확인해야 합니다. 시스템에 설치된 Node.js를 이 모듈이 자동으로 변경하지 않습니다.
+`package.json`의 `engines.node`에도 지원 범위를 명시했습니다. **폴더를 복사해서 실행하는 방식에서는 engines가 실행을 자동으로 막지 않으므로**, 프로젝트 빌드 환경의 Node.js 버전을 직접 확인해야 합니다. 시스템에 설치된 Node.js를 이 모듈이 자동으로 변경하지 않습니다.
 
 ## 설정
 
@@ -48,13 +48,38 @@ module.exports = {
 
 `package.json`에 `"type": "module"`이 있으면 `export default { ... }`로 작성하세요. 파일 확장자로 형식을 명시하려면 `stdLintConfig.cjs` 또는 `stdLintConfig.mjs`를 사용할 수 있습니다. 설정 파일은 실행되는 JavaScript이므로 신뢰할 수 있는 파일을 사용해야 합니다.
 
-설정에서 `parserOptions.ecmaVersion`과 `sourceType`을 회사 Uglify가 지원하는 문법에 맞추세요. `env`는 사용 가능한 전역 이름 등을 정의하는 설정이며, Uglify 실행 성공까지 보장하지는 않습니다. 변환 후 ESLint의 기본 파서 설정은 최신 ECMAScript/module입니다. 구형 script를 검사하려면 예시처럼 명시하세요.
+설정에서 `parserOptions.ecmaVersion`과 `sourceType`을 프로젝트 Uglify가 지원하는 문법에 맞추세요. `env`는 사용 가능한 전역 이름 등을 정의하는 설정이며, Uglify 실행 성공까지 보장하지는 않습니다. 변환 후 ESLint의 기본 파서 설정은 최신 ECMAScript/module입니다. 구형 script를 검사하려면 예시처럼 명시하세요.
 
 `env`, `globals`, `rules`, `parserOptions`, `overrides`, `ignorePatterns`, `extends: ['eslint:recommended']`/`['eslint:all']` 등 기존 eslintrc 형식을 지원합니다. 최신 flat config 배열을 직접 받는 API는 아닙니다. 설정을 자동 병합하지 않으며, 파일별로 가장 가까운 설정 하나를 선택합니다. 해당 설정의 `extends`/`overrides`는 ESLint 방식으로 적용됩니다.
 
 배포본에는 ESLint 기본 규칙과 기본 파서만 포함되어 있습니다. 별도 플러그인, TypeScript/Babel 파서, 외부 공유 설정은 추가로 vendor에 포함하고 호환성을 검증해야 사용할 수 있습니다. 플러그인 전용 env는 현재 지원하지 않습니다. ESLint 10에서 제거된 예전 규칙도 그대로 사용할 수는 없습니다.
 
-## CommonJS / Uglify 파이프라인
+## 함수 하나로 검사하기: checkFiles
+
+`checkFiles(filePaths, options)`는 `lintFiles()`와 같은 인자를 받습니다. 검사에 통과하면 결과 객체를 반환하고, 실패하면 `StdLintError`를 던집니다. 콘솔 출력이나 프로세스 종료는 호출자가 처리합니다.
+
+```js
+const { checkFiles } = require('./tools/std-lint');
+
+checkFiles(['src/app.js'], {
+  cwd: __dirname,
+  configFile: './config/project-lint.cjs',
+})
+  .then(report => {
+    console.log('검사 통과:', report.summary);
+    // 기존 Uglify 호출을 여기에 넣으세요.
+  })
+  .catch(error => {
+    console.error(error.message);
+    process.exitCode = error.exitCode || 2;
+  });
+```
+
+ESM에서는 `import { checkFiles } from './tools/std-lint/index.mjs'`로 불러와 `await checkFiles(files, options)`를 사용합니다. 실패 결과는 `error.report`, 종료 코드는 `error.exitCode`로 확인할 수 있습니다. 기본적으로 경고만 있으면 통과하고 `failOnWarning: true`이면 경고도 실패입니다. 잘못된 API 인자는 `TypeError`를 던집니다.
+
+실행 예제: [one-call.cjs](examples/one-call.cjs) / [one-call.mjs](examples/one-call.mjs).
+
+## 결과 처리를 직접 구성하기: CommonJS / Uglify 파이프라인
 
 ```js
 const { lintFiles, formatReport, assertPassed } = require('./tools/std-lint');
@@ -100,7 +125,7 @@ assertPassed(report);
 
 - `filePaths`: 실제 파일 경로의 배열입니다. 상대 경로는 `options.cwd` 기준이며, 기본값은 `process.cwd()`입니다. glob이나 폴더 경로는 확장하지 않습니다.
 - 중복된 절대 경로는 한 번만 검사하고 입력 순서를 유지합니다. 빈 배열은 성공입니다. 심볼릭 링크의 별칭까지 중복 제거하지는 않습니다.
-- `configFile`: 선택 사항입니다. 상대 경로는 `cwd` 기준입니다. 지정하면 모든 파일에 동일한 설정을 적용합니다. 회사 빌드에서는 이 옵션으로 설정을 명시하는 것을 권장합니다.
+- `configFile`: 선택 사항입니다. 상대 경로는 `cwd` 기준입니다. 지정하면 모든 파일에 동일한 설정을 적용합니다. 프로젝트 빌드에서는 이 옵션으로 설정을 명시하는 것을 권장합니다.
 - 생략하면 각 대상 파일의 폴더부터 파일시스템 루트까지 올라가며 가장 가까운 `stdLintConfig.js`, `.cjs`, `.mjs`를 찾습니다. 같은 폴더에 여러 개면 이 순서로 선택합니다. 설정이 없으면 실패합니다.
 - 파일 읽기·설정 오류가 있어도 나머지 파일을 계속 검사합니다. 자동 수정은 하지 않습니다. 일반 ESLint inline 주석은 ESLint 기준으로 적용됩니다.
 - `ignorePatterns`나 ESLint 기본 제외 대상 때문에 입력 파일이 검사되지 않으면 `FILE_NOT_LINTED` 실패로 처리합니다. 검사에서 제외할 파일은 호출자가 배열에서 빼주세요.
@@ -157,6 +182,6 @@ assertPassed(report);
 
 ## 업데이트와 고지
 
-이 폴더를 통째로 교체해 업데이트합니다. 회사별 설정은 이 폴더 밖에서 관리하세요. `vendor/node_modules` 안의 의존성 파일과 LICENSE/저작권 고지를 삭제하지 마세요. 외부 패키지 버전과 무결성 해시는 `vendor/package-lock.json`에 기록되어 있습니다.
+이 폴더를 통째로 교체해 업데이트합니다. 프로젝트별 설정은 이 폴더 밖에서 관리하세요. `vendor/node_modules` 안의 의존성 파일과 LICENSE/저작권 고지를 삭제하지 마세요. 외부 패키지 버전과 무결성 해시는 `vendor/package-lock.json`에 기록되어 있습니다.
 
-의존성 보안 점검에서 확인된 minimatch advisory와 실제 회사 환경에서 추가 확인할 항목은 [KNOWN_ISSUES.md](KNOWN_ISSUES.md)를 참고하세요.
+의존성 보안 점검에서 확인된 minimatch advisory와 실제 프로젝트 환경에서 추가 확인할 항목은 [KNOWN_ISSUES.md](KNOWN_ISSUES.md)를 참고하세요.

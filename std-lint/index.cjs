@@ -189,4 +189,9 @@ function assertPassed(report) {
   return report;
 }
 
-module.exports = { lintFiles, formatReport, assertPassed, StdLintError };
+/** One-call pipeline check: return a passing report or reject with StdLintError. */
+async function checkFiles(filePaths, options = {}) {
+  return assertPassed(await lintFiles(filePaths, options));
+}
+
+module.exports = { checkFiles, lintFiles, formatReport, assertPassed, StdLintError };

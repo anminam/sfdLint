@@ -5,7 +5,7 @@ try {
   const files = process.argv.slice(2);
   const report = await lintFiles(files.length ? files : ['src/valid.js'], {
     cwd: fileURLToPath(new URL('.', import.meta.url)),
-    configFile: './config/company-lint.mjs',
+    configFile: './config/project-lint.mjs',
     failOnWarning: false,
   });
   console.log(formatReport(report));

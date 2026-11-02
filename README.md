@@ -2,17 +2,17 @@
 
 Uglify 실행 전에 파일 경로 배열을 검사하는 Node.js 모듈입니다. `stdLintConfig.js`의 기존 ESLint 설정을 공식 `FlatCompat`로 변환하고 ESLint로 검사합니다.
 
-## 빠른 시작: 회사 프로젝트에서 사용하기
+## 빠른 시작: 프로젝트에서 사용하기
 
 ### 1. 폴더 복사하기
 
-GitHub의 **Code → Download ZIP**으로 내려받거나 이 저장소를 clone합니다. 내려받은 저장소 안에서 **`vendor`가 들어 있는 `std-lint/` 폴더 전체**를 회사 프로젝트의 `tools/std-lint/`로 복사하세요. `vendor/node_modules`도 반드시 포함합니다. 회사 프로젝트에서 npm 설치나 네트워크 접속은 필요 없습니다.
+GitHub의 **Code → Download ZIP**으로 내려받거나 이 저장소를 clone합니다. 내려받은 저장소 안에서 **`vendor`가 들어 있는 `std-lint/` 폴더 전체**를 프로젝트의 `tools/std-lint/`로 복사하세요. `vendor/node_modules`도 반드시 포함합니다. 프로젝트에서 npm 설치나 네트워크 접속은 필요 없습니다.
 
 ```text
 my-project/
 ├── build.cjs                   ← 검사 실행 코드
 ├── config/
-│   └── company-lint.cjs         ← 회사별 설정 (이름·경로 자유)
+│   └── project-lint.cjs         ← 프로젝트별 설정 (이름·경로 자유)
 ├── src/
 │   └── app.js                  ← 검사할 코드
 └── tools/
@@ -28,7 +28,7 @@ my-project/
 
 ### 2. 설정 파일 만들기
 
-`config/company-lint.cjs`를 만듭니다. 기존 ESLint 설정처럼 작성하세요.
+`config/project-lint.cjs`를 만듭니다. 기존 ESLint 설정처럼 작성하세요.
 
 ```js
 module.exports = {
@@ -44,16 +44,41 @@ module.exports = {
 ```
 
 - `env`: 사용 환경의 전역 이름을 허용합니다. 위 설정은 `window`, `document` 등을 허용합니다.
-- `globals`: 회사 코드의 전역 이름을 등록합니다. 위 설정의 `STD`를 회사에서 쓰는 이름으로 바꾸세요. `readonly`는 대입을 금지합니다.
+- `globals`: 프로젝트 코드의 전역 이름을 등록합니다. 위 설정의 `STD`를 프로젝트에서 쓰는 이름으로 바꾸세요. `readonly`는 대입을 금지합니다.
 - `extends`: ESLint 권장 규칙을 적용합니다.
-- `parserOptions`: 허용할 문법 버전과 script/module 형식입니다. 회사 Uglify가 처리할 수 있는 문법에 맞추세요.
+- `parserOptions`: 허용할 문법 버전과 script/module 형식입니다. 프로젝트 Uglify가 처리할 수 있는 문법에 맞추세요.
 - `rules`: 규칙별로 `off`, `warn`, `error`를 지정합니다.
 
-이 예제는 `.cjs`를 사용하므로 회사 프로젝트의 `type: module` 여부와 관계없이 `module.exports`로 작성할 수 있습니다. `.mjs` 설정은 `export default { ... }`로 작성합니다.
+이 예제는 `.cjs`를 사용하므로 프로젝트의 `type: module` 여부와 관계없이 `module.exports`로 작성할 수 있습니다. `.mjs` 설정은 `export default { ... }`로 작성합니다.
 
-### 3. 검사 실행 코드 작성하기 (CommonJS)
+### 3. 함수 하나로 검사하기 (CommonJS)
 
-프로젝트 루트에 `build.cjs`를 만듭니다.
+프로젝트 루트의 `build.cjs`에 다음처럼 작성하면 됩니다. **`checkFiles()` 한 번으로 검사하고, 실패하면 다음 단계 진행을 막습니다.**
+
+```js
+const { checkFiles } = require('./tools/std-lint');
+
+checkFiles(['src/app.js', 'src/common.js'], {
+  cwd: __dirname,
+  configFile: './config/project-lint.cjs',
+})
+  .then(report => {
+    console.log('검사 통과:', report.summary);
+    // 기존 Uglify 호출은 여기에 넣으세요.
+  })
+  .catch(error => {
+    console.error(error.message);
+    process.exitCode = error.exitCode || 2;
+  });
+```
+
+위 코드를 사용할 때는 `src/app.js`, `src/common.js`를 실제 검사할 파일 경로로 바꾸세요. 성공 시 `report`를 반환하고, 문법·규칙 오류나 파일·설정 실패 시 `StdLintError`를 던집니다. 오류의 `error.report`에서 전체 결과를 확인할 수 있습니다. 경고만 있으면 통과하며, `failOnWarning: true`를 추가하면 경고도 실패로 처리합니다.
+
+ESM에서는 `import { checkFiles } from './tools/std-lint/index.mjs'`로 불러와 `await checkFiles(files, options)`를 호출하면 됩니다. 실행 가능한 예제: [CommonJS](std-lint/examples/one-call.cjs) / [ESM](std-lint/examples/one-call.mjs).
+
+### 4. 결과 출력과 실패 처리를 직접 구성하기
+
+콘솔 출력 형식과 중단 처리를 직접 구성하려면 다음 `build.cjs` 예제를 사용하세요.
 
 ```js
 const path = require('node:path');
@@ -65,7 +90,7 @@ async function main() {
 
   const report = await lintFiles(files, {
     cwd: __dirname,
-    configFile: './config/company-lint.cjs',
+    configFile: './config/project-lint.cjs',
     failOnWarning: false,
   });
 
@@ -85,7 +110,9 @@ main().catch(error => {
 
 파일이 여러 개면 `['src/app.js', 'src/common.js']`처럼 배열에 추가하면 됩니다. `lintFiles()`는 검사 결과를 반환하며, **`assertPassed(report)`를 호출해야 검사 실패 시 다음 단계가 중단**됩니다. `report.passed`를 직접 확인해 분기하는 방법도 있습니다.
 
-### 4. 실행하고 결과 확인하기
+### 5. 실행하고 결과 확인하기
+
+아래는 4단계의 `build.cjs`로 정상·오류 출력을 확인하는 과정입니다.
 
 먼저 `src/app.js`에 다음 코드를 넣어 정상 동작을 확인합니다.
 
@@ -93,7 +120,7 @@ main().catch(error => {
 window.alert(STD.version);
 ```
 
-회사 프로젝트 루트에서 실행합니다. 예제의 소스는 lint가 읽기만 하므로 브라우저나 `STD` 객체를 실제로 실행 환경에 만들 필요는 없습니다.
+프로젝트 루트에서 실행합니다. 예제의 소스는 lint가 읽기만 하므로 브라우저나 `STD` 객체를 실제로 실행 환경에 만들 필요는 없습니다.
 
 ```sh
 node build.cjs
@@ -132,7 +159,7 @@ async function main() {
   const files = ['src/app.js'].map(file => path.resolve(projectRoot, file));
   const report = await lintFiles(files, {
     cwd: projectRoot,
-    configFile: './config/company-lint.cjs',
+    configFile: './config/project-lint.cjs',
     failOnWarning: false,
   });
 
@@ -171,11 +198,11 @@ const report = await lintFiles(files, {
 | `configFile` | 사용할 설정의 이름·경로. 절대 경로도 가능 |
 | `failOnWarning` | `false`면 경고만 있을 때 통과(기본값). `true`면 경고도 실패 |
 
-`configFile`을 생략하면 각 대상 파일의 폴더부터 상위 폴더로 올라가며 가장 가까운 `stdLintConfig.js`, `.cjs`, `.mjs`를 찾습니다. 회사 빌드에서는 `configFile`을 명시하는 것을 권장합니다.
+`configFile`을 생략하면 각 대상 파일의 폴더부터 상위 폴더로 올라가며 가장 가까운 `stdLintConfig.js`, `.cjs`, `.mjs`를 찾습니다. 프로젝트 빌드에서는 `configFile`을 명시하는 것을 권장합니다.
 
 ## 결과를 프로그램에서 사용하기
 
-`report`는 JSON으로 저장할 수 있는 객체입니다.
+`checkFiles()`의 성공 결과와 `lintFiles()`의 결과는 같은 형식이며, JSON으로 저장할 수 있는 객체입니다. 실패 시에도 결과가 필요하면 `checkFiles()`의 `error.report`를 사용하거나 `lintFiles()`를 호출하세요.
 
 | 항목 | 의미 |
 | --- | --- |
@@ -195,16 +222,19 @@ const report = await lintFiles(files, {
 node std-lint/examples/commonjs.cjs
 node std-lint/examples/esm.mjs
 node std-lint/examples/commonjs.cjs src/invalid.js
+node std-lint/examples/one-call.cjs
+node std-lint/examples/one-call.mjs src/invalid.js
 ```
 
 | 필요한 내용 | 문서 / 예제 |
 | --- | --- |
 | 예제별 명령과 예상 결과, 문제 해결 | [예제 실행 가이드](std-lint/examples/README.md) |
 | 전체 API와 설정 동작 | [사용 매뉴얼](std-lint/README.md) |
+| 함수 한 번 호출로 검사와 실패 처리 | [one-call.cjs](std-lint/examples/one-call.cjs) / [one-call.mjs](std-lint/examples/one-call.mjs) |
 | `require()` / `import` 예제 | [commonjs.cjs](std-lint/examples/commonjs.cjs) / [esm.mjs](std-lint/examples/esm.mjs) |
 | 기존 Uglify 함수를 전달하는 연결 예제 | [pipeline.cjs](std-lint/examples/pipeline.cjs) |
 | JSON 결과 출력 | [json-report.cjs](std-lint/examples/json-report.cjs) |
-| 설정 파일 | [company-lint.cjs](std-lint/examples/config/company-lint.cjs) |
+| 설정 파일 | [project-lint.cjs](std-lint/examples/config/project-lint.cjs) |
 
 포함된 엔진은 ESLint 10.14.0이며 기본 규칙과 기본 파서를 제공합니다. 외부 플러그인·파서·공유 설정은 별도 vendor 구성이 필요합니다. 기존 ESLint 버전과의 결과 비교, 의존성 보안 점검 등은 [확인된 제한 사항](std-lint/KNOWN_ISSUES.md)을 참고하세요.
 
@@ -215,7 +245,7 @@ npm test
 npm run release
 ```
 
-테스트와 배포에도 npm 의존성 설치가 필요 없습니다. `npm run release`는 `dist/std-lint-1.0.0/std-lint/` 폴더와 `dist/std-lint-1.0.0.tar.gz`를 만듭니다. 복사해서 쓸 코드는 `std-lint/` 안에만 있습니다.
+테스트와 배포에도 npm 의존성 설치가 필요 없습니다. `npm run release`는 `dist/std-lint-1.1.0/std-lint/` 폴더와 `dist/std-lint-1.1.0.tar.gz`를 만듭니다. 복사해서 쓸 코드는 `std-lint/` 안에만 있습니다.
 
 ## Git으로 업데이트하기
 
@@ -225,7 +255,7 @@ npm run release
 2. `npm test`를 실행합니다.
 3. 배포 시 `std-lint/package.json` 버전을 올리고 변경 사항을 `std-lint/CHANGELOG.md`에 기록합니다.
 4. `npm run release` 후 Git 커밋과 버전 태그를 만듭니다.
-5. 회사 프로젝트에서는 해당 버전의 `tools/std-lint` 폴더 **전체를 교체**합니다. 회사별 설정 파일은 이 폴더 밖에 두세요.
+5. 프로젝트에서는 해당 버전의 `tools/std-lint` 폴더 **전체를 교체**합니다. 프로젝트별 설정 파일은 이 폴더 밖에 두세요.
 
 의존성을 업데이트할 때만 인터넷이 되는 개발 환경에서 다음을 실행합니다. 버전은 검토한 정확한 버전으로 지정하고, 변경된 lockfile과 vendor 폴더도 커밋합니다.
 
@@ -234,6 +264,6 @@ npm install --prefix std-lint/vendor --save-exact eslint@<version> @eslint/eslin
 npm test
 ```
 
-lockfile로 vendor를 다시 구성하려면 `npm ci --prefix std-lint/vendor --omit=dev --ignore-scripts`를 사용합니다. 이 명령은 개발 환경에서만 실행합니다. 회사 프로젝트에서 실행할 명령이 아닙니다.
+lockfile로 vendor를 다시 구성하려면 `npm ci --prefix std-lint/vendor --omit=dev --ignore-scripts`를 사용합니다. 이 명령은 개발 환경에서만 실행합니다. 프로젝트에서 실행할 명령이 아닙니다.
 
 원격 Git 저장소: [anminam/std-lint](https://github.com/anminam/std-lint)
