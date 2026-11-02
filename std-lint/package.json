@@ -1,0 +1,11 @@
+{
+  "name": "std-lint",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "./index.cjs",
+  "exports": {
+    ".": { "import": "./index.mjs", "require": "./index.cjs" }
+  },
+  "engines": { "node": "^20.19.0 || ^22.13.0 || >=24.0.0" }
+}

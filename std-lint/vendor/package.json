@@ -1,0 +1,11 @@
+{
+  "name": "std-lint-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Offline runtime: intentionally committed with all production dependencies.",
+  "dependencies": {
+    "@eslint/eslintrc": "3.3.7",
+    "@eslint/js": "10.0.1",
+    "eslint": "10.14.0"
+  }
+}
