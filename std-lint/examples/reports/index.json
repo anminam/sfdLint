@@ -1,0 +1,182 @@
+{
+  "catalogVersion": 1,
+  "reportSchemaVersion": 1,
+  "reportSchema": "../../report.schema.json",
+  "generator": {
+    "packageVersion": "2.0.0",
+    "eslintVersion": "10.14.0",
+    "nodeVersion": "24.22.2"
+  },
+  "usage": {
+    "purpose": "notification",
+    "continuePipelineOnFindings": true,
+    "applyReportExitCodeToProcess": false
+  },
+  "scenarios": [
+    {
+      "id": "01-success",
+      "title": "정상",
+      "reportFile": "01-success.json",
+      "input": {
+        "filePaths": [
+          "src/valid.js"
+        ],
+        "options": {
+          "cwd": "/project",
+          "configFile": "./config/project-lint.cjs"
+        }
+      },
+      "expected": {
+        "passed": true,
+        "reportExitCode": 0,
+        "processExitCode": 0,
+        "continuePipeline": true
+      }
+    },
+    {
+      "id": "02-rule-error",
+      "title": "규칙 오류 알림",
+      "reportFile": "02-rule-error.json",
+      "input": {
+        "filePaths": [
+          "src/invalid.js"
+        ],
+        "options": {
+          "cwd": "/project",
+          "configFile": "./config/project-lint.cjs"
+        }
+      },
+      "expected": {
+        "passed": false,
+        "reportExitCode": 1,
+        "processExitCode": 0,
+        "continuePipeline": true
+      }
+    },
+    {
+      "id": "03-syntax-error",
+      "title": "문법 오류 알림",
+      "reportFile": "03-syntax-error.json",
+      "input": {
+        "filePaths": [
+          "src/syntax-error.js"
+        ],
+        "options": {
+          "cwd": "/project",
+          "configFile": "./config/project-lint.cjs"
+        }
+      },
+      "expected": {
+        "passed": false,
+        "reportExitCode": 1,
+        "processExitCode": 0,
+        "continuePipeline": true
+      }
+    },
+    {
+      "id": "04-warning",
+      "title": "경고 알림",
+      "reportFile": "04-warning.json",
+      "input": {
+        "filePaths": [
+          "src/warning.js"
+        ],
+        "options": {
+          "cwd": "/project",
+          "configFile": "./config/project-lint.cjs"
+        }
+      },
+      "expected": {
+        "passed": true,
+        "reportExitCode": 0,
+        "processExitCode": 0,
+        "continuePipeline": true
+      }
+    },
+    {
+      "id": "05-warning-classified",
+      "title": "경고를 위반으로 분류",
+      "reportFile": "05-warning-classified.json",
+      "input": {
+        "filePaths": [
+          "src/warning.js"
+        ],
+        "options": {
+          "cwd": "/project",
+          "configFile": "./config/project-lint.cjs",
+          "failOnWarning": true
+        }
+      },
+      "expected": {
+        "passed": false,
+        "reportExitCode": 1,
+        "processExitCode": 0,
+        "continuePipeline": true
+      }
+    },
+    {
+      "id": "06-missing-file",
+      "title": "입력 파일 없음",
+      "reportFile": "06-missing-file.json",
+      "input": {
+        "filePaths": [
+          "src/missing.js"
+        ],
+        "options": {
+          "cwd": "/project",
+          "configFile": "./config/project-lint.cjs"
+        }
+      },
+      "expected": {
+        "passed": false,
+        "reportExitCode": 2,
+        "processExitCode": 0,
+        "continuePipeline": true
+      }
+    },
+    {
+      "id": "07-missing-config",
+      "title": "설정 파일 없음",
+      "reportFile": "07-missing-config.json",
+      "input": {
+        "filePaths": [
+          "src/valid.js"
+        ],
+        "options": {
+          "cwd": "/project",
+          "configFile": "./config/not-found.cjs"
+        }
+      },
+      "expected": {
+        "passed": false,
+        "reportExitCode": 2,
+        "processExitCode": 0,
+        "continuePipeline": true
+      }
+    },
+    {
+      "id": "08-mixed",
+      "title": "여러 파일의 정상·규칙·문법·경고·실행 문제",
+      "reportFile": "08-mixed.json",
+      "input": {
+        "filePaths": [
+          "src/valid.js",
+          "src/invalid.js",
+          "src/syntax-error.js",
+          "src/warning.js",
+          "src/missing.js"
+        ],
+        "options": {
+          "cwd": "/project",
+          "configFile": "./config/project-lint.cjs"
+        }
+      },
+      "expected": {
+        "passed": false,
+        "reportExitCode": 2,
+        "processExitCode": 0,
+        "continuePipeline": true
+      }
+    }
+  ]
+}

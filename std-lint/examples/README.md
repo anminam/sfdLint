@@ -122,7 +122,10 @@ JSON 파일로 저장하려면 다음처럼 실행합니다. 기본 JSON 예제�
 ```sh
 node std-lint/examples/json-report.cjs > lint-report.json
 node std-lint/examples/json-report.cjs src/valid.js > lint-report.json
+node std-lint/examples/json-report.cjs src/valid.js src/invalid.js src/syntax-error.js src/warning.js > lint-report.json
 ```
+
+바로 열어볼 수 있는 [JSON 결과 8종](reports/), [시나리오별 입력·옵션·예상 결과](reports/index.json), [응답 스키마](../report.schema.json)도 제공합니다. 이 JSON 파일은 실제 응답에서 경로만 `/project` 기준으로 바꾼 예시입니다. 저장소 개발 환경에서는 `npm run examples:reports`로 전부 재생성하고 검증할 수 있습니다.
 
 반환 객체 전체와 추가 동작은 [API 매뉴얼](../README.md#반환-형식)을 참고하세요.
 

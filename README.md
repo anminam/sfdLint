@@ -308,6 +308,62 @@ checkFiles(['src/app.js'], { configFile: './config/project-lint.cjs' })
 
 정상·규칙 오류·문법 오류·경고·파일 실패·설정 실패의 **전체 JSON과 콘솔 출력**은 [report 결과 예시](std-lint/REPORT_EXAMPLES.md)에 있습니다.
 
+## JSON 결과 파일과 스키마
+
+결과를 직접 내려받아 UI·로그·다른 도구에 연결할 수 있도록 **실제 API 응답을 `.json` 파일로 제공**합니다. 각 report의 데이터 구조는 [report.schema.json](std-lint/report.schema.json)으로 검증했습니다.
+
+| 상황 | 실제 응답 JSON |
+| --- | --- |
+| 정상 | [01-success.json](std-lint/examples/reports/01-success.json) |
+| 규칙 오류 | [02-rule-error.json](std-lint/examples/reports/02-rule-error.json) |
+| 문법 오류 | [03-syntax-error.json](std-lint/examples/reports/03-syntax-error.json) |
+| 경고 | [04-warning.json](std-lint/examples/reports/04-warning.json) |
+| 경고를 위반으로 분류 | [05-warning-classified.json](std-lint/examples/reports/05-warning-classified.json) |
+| 파일 없음 | [06-missing-file.json](std-lint/examples/reports/06-missing-file.json) |
+| 설정 없음 | [07-missing-config.json](std-lint/examples/reports/07-missing-config.json) |
+| 여러 파일의 정상·오류·경고 혼합 | [08-mixed.json](std-lint/examples/reports/08-mixed.json) |
+
+혼합 예시에서는 파일 5개 중 4개를 검사하고 1개는 읽지 못했습니다. 결과의 핵심 값은 다음과 같습니다. 전체 응답의 `files`에는 파일별 위치·규칙·메시지가, `issues`에는 읽기 실패 정보가 들어 있습니다.
+
+```json
+{
+  "version": 1,
+  "passed": false,
+  "exitCode": 2,
+  "summary": {
+    "fileCount": 5,
+    "lintedFileCount": 4,
+    "failedFileCount": 1,
+    "errorCount": 2,
+    "warningCount": 1,
+    "fatalErrorCount": 1
+  }
+}
+```
+
+위 JSON은 핵심 필드만 발췌한 예시이며, 스키마 검증에는 링크한 **전체 응답 JSON**을 사용합니다. 문법 오류 1건은 `errorCount: 2`에 포함되므로 `fatalErrorCount`를 별도로 더하지 않습니다. 이 결과에서도 **다음 단계는 계속 진행하며 예제 프로세스 종료 코드는 0**입니다.
+
+[index.json](std-lint/examples/reports/index.json)에는 예시별 입력 파일, 옵션, 예상 결과와 실행 정책을 함께 적었습니다. 이 파일은 report 자체가 아닌 **예시 목록 메타데이터**입니다. 다음 정보도 포함되어 있어 결과 분류와 파이프라인 진행을 구분할 수 있습니다.
+
+```json
+{
+  "usage": {
+    "purpose": "notification",
+    "continuePipelineOnFindings": true,
+    "applyReportExitCodeToProcess": false
+  }
+}
+```
+
+현재 프로젝트에서 새 JSON을 생성하려면 다음처럼 실행합니다. 첫 번째 명령은 실제 파일을 검사해 stdout에 순수 JSON을 출력하며, 오류가 있어도 정상 종료(0)합니다.
+
+```sh
+node std-lint/examples/json-report.cjs src/valid.js src/invalid.js src/syntax-error.js src/warning.js > lint-report.json
+npm run examples:reports
+```
+
+`npm run examples:reports`는 저장소 개발용 명령으로, 제공된 8개 시나리오를 다시 검사하고 JSON Schema 및 집계를 검증한 뒤 `std-lint/examples/reports/`에 저장합니다. 경로는 공유하기 쉽도록 `/project`로 치환합니다. 런타임 API와 `json-report.cjs`는 실제 절대 경로를 반환합니다. 외부 패키지 설치는 필요 없습니다.
+
 ## 매뉴얼과 실행 예제
 
 저장소에는 아래 예제가 이미 들어 있습니다. 저장소 루트에서 바로 실행해 볼 수 있습니다.
@@ -328,6 +384,8 @@ node std-lint/examples/one-call.mjs src/invalid.js
 | `require()` / `import` 예제 | [commonjs.cjs](std-lint/examples/commonjs.cjs) / [esm.mjs](std-lint/examples/esm.mjs) |
 | 기존 Uglify 함수를 전달하는 연결 예제 | [pipeline.cjs](std-lint/examples/pipeline.cjs) |
 | JSON 결과 출력 | [json-report.cjs](std-lint/examples/json-report.cjs) |
+| 실제 JSON 결과 8종과 입력·옵션 목록 | [reports/](std-lint/examples/reports) / [index.json](std-lint/examples/reports/index.json) |
+| JSON 필드 타입과 필수 항목 | [report.schema.json](std-lint/report.schema.json) |
 | 설정 파일 | [project-lint.cjs](std-lint/examples/config/project-lint.cjs) |
 
 포함된 엔진은 ESLint 10.14.0이며 기본 규칙과 기본 파서를 제공합니다. 외부 플러그인·파서·공유 설정은 별도 vendor 구성이 필요합니다. 기존 ESLint 버전과의 결과 비교, 의존성 보안 점검 등은 [확인된 제한 사항](std-lint/KNOWN_ISSUES.md)을 참고하세요.

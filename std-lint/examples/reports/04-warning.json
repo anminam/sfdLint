@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "passed": true,
+  "exitCode": 0,
+  "summary": {
+    "fileCount": 1,
+    "lintedFileCount": 1,
+    "failedFileCount": 0,
+    "errorCount": 0,
+    "warningCount": 1,
+    "fatalErrorCount": 0
+  },
+  "files": [
+    {
+      "filePath": "/project/src/warning.js",
+      "configFile": "/project/config/project-lint.cjs",
+      "status": "linted",
+      "errorCount": 0,
+      "warningCount": 1,
+      "fatalErrorCount": 0,
+      "messages": [
+        {
+          "ruleId": "no-unused-vars",
+          "severity": 1,
+          "message": "'unusedValue' is assigned a value but never used.",
+          "line": 2,
+          "column": 5,
+          "messageId": "unusedVar",
+          "endLine": 2,
+          "endColumn": 16,
+          "suggestions": [
+            {
+              "messageId": "removeVar",
+              "data": {
+                "varName": "unusedValue"
+              },
+              "fix": {
+                "range": [
+                  40,
+                  60
+                ],
+                "text": ""
+              },
+              "desc": "Remove unused variable 'unusedValue'."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "issues": []
+}

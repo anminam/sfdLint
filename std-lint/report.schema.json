@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "std-lint report v1",
+  "description": "검사 결과 데이터의 형식입니다. passed/exitCode는 알림용 분류이며 파이프라인을 중단하지 않습니다.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "passed", "exitCode", "summary", "files", "issues"],
+  "properties": {
+    "version": { "const": 1 },
+    "passed": { "type": "boolean", "description": "검사 기준 충족 여부이며 빌드 진행 여부와 별개입니다." },
+    "exitCode": { "type": "integer", "enum": [0, 1, 2], "description": "0: 기준 충족, 1: 검사 위반, 2: 검사 실행 문제. 프로세스 종료 코드로 자동 적용하지 않습니다." },
+    "summary": { "$ref": "#/definitions/summary" },
+    "files": { "type": "array", "items": { "$ref": "#/definitions/file" } },
+    "issues": { "type": "array", "items": { "$ref": "#/definitions/issue" } }
+  },
+  "definitions": {
+    "count": { "type": "integer", "minimum": 0 },
+    "configPath": { "type": ["string", "null"] },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileCount", "lintedFileCount", "failedFileCount", "errorCount", "warningCount", "fatalErrorCount"],
+      "properties": {
+        "fileCount": { "$ref": "#/definitions/count" },
+        "lintedFileCount": { "$ref": "#/definitions/count" },
+        "failedFileCount": { "$ref": "#/definitions/count" },
+        "errorCount": { "$ref": "#/definitions/count" },
+        "warningCount": { "$ref": "#/definitions/count" },
+        "fatalErrorCount": { "$ref": "#/definitions/count" }
+      }
+    },
+    "message": {
+      "type": "object",
+      "description": "ESLint 원본 메시지입니다. suggestions 등 ESLint 추가 필드를 허용합니다.",
+      "additionalProperties": true,
+      "required": ["ruleId", "severity", "message"],
+      "properties": {
+        "ruleId": { "type": ["string", "null"] },
+        "severity": { "type": "integer", "enum": [1, 2] },
+        "message": { "type": "string" },
+        "line": { "type": "integer", "minimum": 0 },
+        "column": { "type": "integer", "minimum": 0 },
+        "endLine": { "type": "integer", "minimum": 0 },
+        "endColumn": { "type": "integer", "minimum": 0 },
+        "fatal": { "type": "boolean" },
+        "messageId": { "type": "string" },
+        "suggestions": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filePath", "configFile", "status", "errorCount", "warningCount", "fatalErrorCount", "messages"],
+      "properties": {
+        "filePath": { "type": "string" },
+        "configFile": { "$ref": "#/definitions/configPath" },
+        "status": { "type": "string", "enum": ["linted", "failed"] },
+        "errorCount": { "$ref": "#/definitions/count" },
+        "warningCount": { "$ref": "#/definitions/count" },
+        "fatalErrorCount": { "$ref": "#/definitions/count" },
+        "messages": { "type": "array", "items": { "$ref": "#/definitions/message" } }
+      }
+    },
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filePath", "configFile", "stage", "code", "message"],
+      "properties": {
+        "filePath": { "type": "string" },
+        "configFile": { "$ref": "#/definitions/configPath" },
+        "stage": { "type": "string", "enum": ["read", "config", "lint"] },
+        "code": { "type": "string" },
+        "message": { "type": "string" }
+      }
+    }
+  }
+}

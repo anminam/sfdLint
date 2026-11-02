@@ -1,5 +1,24 @@
 # report 결과 예시
 
+## JSON 파일로 확인하기
+
+본문 예시와 함께 [실제 응답 JSON 파일](examples/reports/)도 제공합니다. [index.json](examples/reports/index.json)에는 예시별 입력·옵션·결과 분류·프로세스 종료 코드가, [report.schema.json](report.schema.json)에는 필드별 타입과 필수 항목이 있습니다. JSON Schema는 데이터 구조를 확인하며, 집계 합계는 생성 스크립트에서 별도로 검증합니다.
+
+| 상황 | JSON |
+| --- | --- |
+| 정상 | [01-success](examples/reports/01-success.json) |
+| 규칙 오류 | [02-rule-error](examples/reports/02-rule-error.json) |
+| 문법 오류 | [03-syntax-error](examples/reports/03-syntax-error.json) |
+| 경고 | [04-warning](examples/reports/04-warning.json) |
+| 경고를 위반으로 분류 | [05-warning-classified](examples/reports/05-warning-classified.json) |
+| 파일 없음 | [06-missing-file](examples/reports/06-missing-file.json) |
+| 설정 없음 | [07-missing-config](examples/reports/07-missing-config.json) |
+| 여러 파일의 정상·오류·경고 혼합 | [08-mixed](examples/reports/08-mixed.json) |
+
+JSON 파일은 실제 API 결과에서 절대 경로만 `/project` 기준으로 치환한 값입니다. 아래 본문과 JSON 파일은 생성 시점의 실행 스택 등 일부 오류 문구가 다를 수 있으며, 실제 실행 환경에서도 문구는 달라질 수 있습니다. 저장소 루트의 `npm run examples:reports`로 JSON 파일 8개를 재생성하고 검증할 수 있습니다.
+
+## 본문 예시 읽는 방법
+
 포함된 예제 파일을 ESLint 10.14.0 / Node.js 24.22.2에서 실제 검사한 결과입니다. 읽기 쉽도록 절대 경로의 예제 폴더를 `/project`, 모듈 폴더를 `/project/tools/std-lint`로 바꿨습니다. 오류 문구와 파일 경로 표기는 Node.js·운영체제·ESLint 버전에 따라 달라질 수 있습니다.
 
 기본 옵션은 `{ cwd: '/project', configFile: './config/project-lint.cjs' }`입니다. 예제 소스 첫 줄이 주석이므로 위반 위치는 2행입니다.

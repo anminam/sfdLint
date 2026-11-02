@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "passed": false,
+  "exitCode": 1,
+  "summary": {
+    "fileCount": 1,
+    "lintedFileCount": 1,
+    "failedFileCount": 0,
+    "errorCount": 1,
+    "warningCount": 0,
+    "fatalErrorCount": 1
+  },
+  "files": [
+    {
+      "filePath": "/project/src/syntax-error.js",
+      "configFile": "/project/config/project-lint.cjs",
+      "status": "linted",
+      "errorCount": 1,
+      "warningCount": 0,
+      "fatalErrorCount": 1,
+      "messages": [
+        {
+          "ruleId": null,
+          "fatal": true,
+          "severity": 2,
+          "message": "Parsing error: Unexpected token ;",
+          "line": 2,
+          "column": 43
+        }
+      ]
+    }
+  ],
+  "issues": []
+}

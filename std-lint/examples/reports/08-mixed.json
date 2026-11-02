@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "passed": false,
+  "exitCode": 2,
+  "summary": {
+    "fileCount": 5,
+    "lintedFileCount": 4,
+    "failedFileCount": 1,
+    "errorCount": 2,
+    "warningCount": 1,
+    "fatalErrorCount": 1
+  },
+  "files": [
+    {
+      "filePath": "/project/src/valid.js",
+      "configFile": "/project/config/project-lint.cjs",
+      "status": "linted",
+      "errorCount": 0,
+      "warningCount": 0,
+      "fatalErrorCount": 0,
+      "messages": []
+    },
+    {
+      "filePath": "/project/src/invalid.js",
+      "configFile": "/project/config/project-lint.cjs",
+      "status": "linted",
+      "errorCount": 1,
+      "warningCount": 0,
+      "fatalErrorCount": 0,
+      "messages": [
+        {
+          "ruleId": "no-undef",
+          "severity": 2,
+          "message": "'notRegistered' is not defined.",
+          "line": 2,
+          "column": 14,
+          "messageId": "undef",
+          "endLine": 2,
+          "endColumn": 27
+        }
+      ]
+    },
+    {
+      "filePath": "/project/src/syntax-error.js",
+      "configFile": "/project/config/project-lint.cjs",
+      "status": "linted",
+      "errorCount": 1,
+      "warningCount": 0,
+      "fatalErrorCount": 1,
+      "messages": [
+        {
+          "ruleId": null,
+          "fatal": true,
+          "severity": 2,
+          "message": "Parsing error: Unexpected token ;",
+          "line": 2,
+          "column": 43
+        }
+      ]
+    },
+    {
+      "filePath": "/project/src/warning.js",
+      "configFile": "/project/config/project-lint.cjs",
+      "status": "linted",
+      "errorCount": 0,
+      "warningCount": 1,
+      "fatalErrorCount": 0,
+      "messages": [
+        {
+          "ruleId": "no-unused-vars",
+          "severity": 1,
+          "message": "'unusedValue' is assigned a value but never used.",
+          "line": 2,
+          "column": 5,
+          "messageId": "unusedVar",
+          "endLine": 2,
+          "endColumn": 16,
+          "suggestions": [
+            {
+              "messageId": "removeVar",
+              "data": {
+                "varName": "unusedValue"
+              },
+              "fix": {
+                "range": [
+                  40,
+                  60
+                ],
+                "text": ""
+              },
+              "desc": "Remove unused variable 'unusedValue'."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "filePath": "/project/src/missing.js",
+      "configFile": "/project/config/project-lint.cjs",
+      "status": "failed",
+      "errorCount": 0,
+      "warningCount": 0,
+      "fatalErrorCount": 0,
+      "messages": []
+    }
+  ],
+  "issues": [
+    {
+      "filePath": "/project/src/missing.js",
+      "configFile": "/project/config/project-lint.cjs",
+      "stage": "read",
+      "code": "ENOENT",
+      "message": "ENOENT: no such file or directory, open '/project/src/missing.js'"
+    }
+  ]
+}

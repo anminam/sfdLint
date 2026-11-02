@@ -133,6 +133,8 @@ console.log(formatReport(report));
 
 실제 예제 파일을 검사한 정상·규칙 오류·문법 오류·경고·파일/설정 실패 결과와 콘솔 출력은 [report 결과 예시](REPORT_EXAMPLES.md)에 있습니다. 아래는 필드를 설명하기 위한 형식 예시입니다.
 
+파싱 가능한 실제 응답 파일은 [examples/reports/](examples/reports/), 입력·옵션 목록은 [index.json](examples/reports/index.json)에 있습니다. 반환 형식은 [report.schema.json](report.schema.json)(JSON Schema Draft-07)으로 제공합니다. 스키마는 필드 구조를 검증하며 오류 수의 합계나 실제 빌드 실행 여부까지 검증하지는 않습니다. `index.json`의 실행 정책 정보는 report 응답 필드와 구분됩니다.
+
 ```js
 {
   version: 1,                 // 결과 스키마 버전
