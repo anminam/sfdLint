@@ -417,5 +417,3 @@ npm test
 ```
 
 lockfile로 vendor를 다시 구성하려면 `npm ci --prefix std-lint/vendor --omit=dev --ignore-scripts`를 사용합니다. 이 명령은 개발 환경에서만 실행합니다. 프로젝트에서 실행할 명령이 아닙니다.
-
-원격 Git 저장소: [anminam/std-lint](https://github.com/anminam/std-lint)
