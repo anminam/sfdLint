@@ -214,6 +214,102 @@ const report = await lintFiles(files, {
 
 `formatReport(report)`는 콘솔에 출력할 문자열을 만들고, `assertPassed(report)`는 실패 시 `StdLintError`를 던집니다. 라이브러리 자체가 프로세스를 종료하지는 않으며 위 예제의 `catch`에서 종료 코드를 설정합니다. [반환 객체 전체 예시](std-lint/README.md#반환-형식)
 
+### 실제 report는 이렇게 나옵니다
+
+정상 파일 1개를 검사한 경우의 핵심 값입니다. 전체 결과에는 파일별 `files`와 `issues`도 포함됩니다.
+
+```json
+{
+  "passed": true,
+  "exitCode": 0,
+  "summary": {
+    "fileCount": 1,
+    "lintedFileCount": 1,
+    "failedFileCount": 0,
+    "errorCount": 0,
+    "warningCount": 0,
+    "fatalErrorCount": 0
+  }
+}
+```
+
+다음은 예제 `src/invalid.js`의 `window.alert(notRegistered);`를 검사한 **전체 report**입니다. 첫 줄은 주석이라 오류 위치가 2행입니다. 절대 경로는 읽기 쉽도록 `/project`로 바꿨습니다.
+
+```json
+{
+  "version": 1,
+  "passed": false,
+  "exitCode": 1,
+  "summary": {
+    "fileCount": 1,
+    "lintedFileCount": 1,
+    "failedFileCount": 0,
+    "errorCount": 1,
+    "warningCount": 0,
+    "fatalErrorCount": 0
+  },
+  "files": [
+    {
+      "filePath": "/project/src/invalid.js",
+      "configFile": "/project/config/project-lint.cjs",
+      "status": "linted",
+      "errorCount": 1,
+      "warningCount": 0,
+      "fatalErrorCount": 0,
+      "messages": [
+        {
+          "ruleId": "no-undef",
+          "severity": 2,
+          "message": "'notRegistered' is not defined.",
+          "line": 2,
+          "column": 14,
+          "messageId": "undef",
+          "endLine": 2,
+          "endColumn": 27
+        }
+      ]
+    }
+  ],
+  "issues": []
+}
+```
+
+같은 결과를 `formatReport(report)`로 출력하면 다음과 같습니다.
+
+```text
+/project/src/invalid.js:2:14 error 'notRegistered' is not defined. (no-undef)
+std-lint: FAIL | files 1, linted 1, errors 1, warnings 0, failed 0
+```
+
+| 상황 | passed | exitCode | 확인할 위치 |
+| --- | --- | --- | --- |
+| 정상 | true | 0 | files의 messages가 빈 배열 |
+| 문법·규칙 오류 | false | 1 | files의 messages |
+| 경고만 있음 (기본값) | true | 0 | warningCount와 messages |
+| 경고 + failOnWarning: true | false | 1 | warningCount와 messages |
+| 파일·설정·검사 실행 실패 | false | 2 | issues와 failedFileCount |
+
+`status: 'linted'`는 검사를 수행했다는 뜻입니다. 통과 여부는 `passed`로 확인하세요. `fatalErrorCount`는 `errorCount`에 포함되므로 두 수를 더하지 않습니다.
+
+`checkFiles()`의 실패 결과도 다음처럼 꺼내 쓸 수 있습니다.
+
+```js
+const { checkFiles } = require('./tools/std-lint');
+
+checkFiles(['src/app.js'], { configFile: './config/project-lint.cjs' })
+  .then(report => {
+    console.log(JSON.stringify(report, null, 2));
+    // 통과한 경우에만 다음 빌드 단계를 실행하세요.
+  })
+  .catch(error => {
+    if (error.report) console.error(JSON.stringify(error.report, null, 2));
+    else console.error(error.message); // 잘못된 API 인자 등의 오류
+    process.exitCode = error.exitCode || 2;
+  });
+```
+
+정상·규칙 오류·문법 오류·경고·파일 실패·설정 실패의 **전체 JSON과 콘솔 출력**은 [report 결과 예시](std-lint/REPORT_EXAMPLES.md)에 있습니다.
+
 ## 매뉴얼과 실행 예제
 
 저장소에는 아래 예제가 이미 들어 있습니다. 저장소 루트에서 바로 실행해 볼 수 있습니다.

@@ -104,6 +104,8 @@ const report = await lintFiles(files, {
 
 ## 5. 결과를 프로그램에서 사용하기
 
+실제 실행으로 얻은 전체 JSON과 콘솔 출력은 [report 결과 예시](../REPORT_EXAMPLES.md)를 참고하세요. 정상·규칙 오류·문법 오류·경고·파일 읽기 실패·설정 실패를 각각 볼 수 있습니다.
+
 `checkFiles()`는 성공 시 결과를 반환하고 실패 시 예외를 던집니다. `lintFiles()`는 실패해도 결과 객체를 반환하므로 `report.passed`로 분기하거나 `assertPassed(report)`로 예외를 던져 다음 단계를 막으세요.
 
 | 값 | 용도 |
