@@ -4,6 +4,26 @@ Uglify 실행 전에 파일 경로 배열을 검사하고 결과를 알리는 No
 
 ## 빠른 시작: 프로젝트에서 사용하기
 
+### temp_files.txt와 npm 빌드 명령으로 실행하기
+
+파일 목록을 코드 대신 텍스트 파일로 전달하려면 [빌드 명령 연결 가이드](std-lint/CLI.md)를 참고하세요. `aa/tool/std-lint`에 모듈을 두고, `aa/build/temp_files.txt`에 `aa/bb/cc.js` 같은 경로를 쉼표나 줄바꿈으로 넣을 수 있습니다.
+
+`aa` 프로젝트 루트의 기존 `package.json` scripts에 다음 항목을 추가합니다.
+
+```json
+{
+  "scripts": {
+    "lint:notify": "node tool/std-lint/cli.cjs --file-list ./build/temp_files.txt --cwd .. --config ./config/project-lint.cjs"
+  }
+}
+```
+
+```sh
+npm run lint:notify
+```
+
+`--cwd ..`는 목록에 포함된 `aa/`의 상위 폴더를 경로 기준으로 삼습니다. 목록·설정의 실제 위치는 옵션으로 바꾸면 됩니다. 기존 `npm run riabuild` 전에 자동 실행하는 방법, `execSync` 연결, JSON 출력도 [가이드](std-lint/CLI.md)에 있습니다. **이 CLI는 검사 오류나 목록 읽기 문제 때문에 빌드를 중단하지 않습니다.**
+
 ### 1. 폴더 복사하기
 
 GitHub의 **Code → Download ZIP**으로 내려받거나 이 저장소를 clone합니다. 내려받은 저장소 안에서 **`vendor`가 들어 있는 `std-lint/` 폴더 전체**를 프로젝트의 `tools/std-lint/`로 복사하세요. `vendor/node_modules`도 반드시 포함합니다. 프로젝트에서 npm 설치나 네트워크 접속은 필요 없습니다.
@@ -382,6 +402,7 @@ node std-lint/examples/one-call.mjs src/invalid.js
 | --- | --- |
 | 예제별 명령과 예상 결과, 문제 해결 | [예제 실행 가이드](std-lint/examples/README.md) |
 | 전체 API와 설정 동작 | [사용 매뉴얼](std-lint/README.md) |
+| temp_files.txt / npm run / execSync로 실행 | [빌드 명령 연결 가이드](std-lint/CLI.md) |
 | 함수 한 번 호출로 검사 결과 알림 | [one-call.cjs](std-lint/examples/one-call.cjs) / [one-call.mjs](std-lint/examples/one-call.mjs) |
 | `require()` / `import` 예제 | [commonjs.cjs](std-lint/examples/commonjs.cjs) / [esm.mjs](std-lint/examples/esm.mjs) |
 | 기존 Uglify 함수를 전달하는 연결 예제 | [pipeline.cjs](std-lint/examples/pipeline.cjs) |
@@ -399,7 +420,7 @@ npm test
 npm run release
 ```
 
-테스트와 배포에도 npm 의존성 설치가 필요 없습니다. `npm run release`는 `dist/std-lint-2.0.1/std-lint/` 폴더와 `dist/std-lint-2.0.1.tar.gz`를 만듭니다. 복사해서 쓸 코드는 `std-lint/` 안에만 있습니다.
+테스트와 배포에도 npm 의존성 설치가 필요 없습니다. `npm run release`는 `dist/std-lint-2.1.0/std-lint/` 폴더와 `dist/std-lint-2.1.0.tar.gz`를 만듭니다. 복사해서 쓸 코드는 `std-lint/` 안에만 있습니다.
 
 ## Git으로 업데이트하기
 

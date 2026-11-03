@@ -1,0 +1,4 @@
+src/valid.js,
+src/invalid.js
+src/module.js, src/module-helper.js
+src/syntax-error.js

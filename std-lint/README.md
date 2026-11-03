@@ -4,6 +4,8 @@
 
 처음 사용하는 경우 [예제 실행 가이드](examples/README.md)부터 읽으세요. `examples/`에는 설치 없이 실행할 수 있는 CommonJS·ESM·JSON 출력·파이프라인 예제가 들어 있습니다.
 
+목록을 `temp_files.txt`로 받고 `npm run`/`execSync`로 실행하려면 [CLI 및 빌드 명령 연결 가이드](CLI.md)를 참고하세요. 쉼표·줄바꿈 혼합 목록과 프로젝트 폴더 이름을 포함한 경로를 지원합니다.
+
 ## Node.js 버전
 
 2026-11-02 확인 기준, [Node.js 공식 2026-10-21 보안 공지](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases)에 따른 계열별 최소 버전은 다음과 같습니다. 이 공지에는 Brotli 디코더, DNS, TLS 등의 취약점 수정이 포함됩니다.

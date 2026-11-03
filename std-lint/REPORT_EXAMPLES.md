@@ -25,7 +25,7 @@ JSON 파일은 실제 API 결과에서 절대 경로만 `/project` 기준으로 
 
 `lintFiles()`와 `checkFiles()`는 아래 결과를 그대로 반환합니다. **알림 목적이므로 passed가 false여도 예외를 던지지 않으며 다음 단계로 진행합니다.** `exitCode`는 report의 분류 값이고, 예제 프로세스는 이 값을 종료 코드로 적용하지 않습니다. `formatReport(report)`의 콘솔 출력도 각 예시에 함께 적었습니다. 출력의 PASS/FAIL도 검사 기준 표시이며 빌드 중단을 의미하지 않습니다.
 
-`report.version: 1`은 결과 스키마 버전이며 패키지 버전(2.0.1)과 다릅니다.
+`report.version: 1`은 결과 스키마 버전이며 패키지 버전(2.1.0)과 다릅니다.
 
 ## 정상
 

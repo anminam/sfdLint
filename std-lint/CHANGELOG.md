@@ -1,5 +1,12 @@
 # 변경 이력
 
+## 2.1.0 (2026-11-03)
+
+- `temp_files.txt`를 받는 CLI와 `npm run lint:notify` 진입점 추가.
+- 쉼표·CR/LF·BOM·빈 항목·CSV 따옴표를 지원하는 목록 파서 추가.
+- 목록·설정·경로 기준·JSON 출력/저장 옵션 및 riabuild/execSync 연결 문서 추가.
+- 검사 위반과 목록·설정·의존성 문제도 알림 후 정상 종료하여 기존 빌드 진행 유지.
+
 ## 2.0.1 (2026-11-02)
 
 - 기본 예제 설정을 `sourceType: 'module'`로 변경해 CJS 실행기에서 import/export 대상 코드 검사 지원.

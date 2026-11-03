@@ -1,8 +1,9 @@
 {
   "name": "std-lint",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "private": true,
   "type": "commonjs",
+  "scripts": { "lint:notify": "node cli.cjs" },
   "main": "./index.cjs",
   "exports": {
     ".": { "import": "./index.mjs", "require": "./index.cjs" }
