@@ -17,7 +17,7 @@
 
 JSON 파일은 실제 API 결과에서 절대 경로만 `/project` 기준으로 치환한 값입니다. 아래 본문과 JSON 파일은 생성 시점의 실행 스택 등 일부 오류 문구가 다를 수 있으며, 실제 실행 환경에서도 문구는 달라질 수 있습니다. 저장소 루트의 `npm run examples:reports`로 8개 시나리오의 전체·전용 JSON 파일을 재생성하고 검증할 수 있습니다.
 
-CLI `--format compact-json`은 summary까지 유지하고 오류 파일만 `report.errorFiles`로 모읍니다. 경고는 제외하고 파일별 여러 오류는 줄바꿈으로 합칩니다. [여러 파일 혼합 전용 결과](examples/reports/08-mixed.compact.json), [경고만 있는 전용 결과](examples/reports/04-warning.compact.json), [전용 스키마](compact-report.schema.json)를 참고하세요. `index.json`의 `compactReportFile`은 각 시나리오의 전용 JSON 경로입니다. 전체 API 응답과 기존 `--format json`은 유지합니다.
+CLI `--format compact-json`은 summary까지 유지하고 오류 파일만 `report.errorFiles`로 모읍니다. 경고는 제외하고 파일별 여러 오류는 `errorMessages` 문자열 배열에 각각 담습니다. [여러 파일 혼합 전용 결과](examples/reports/08-mixed.compact.json), [경고만 있는 전용 결과](examples/reports/04-warning.compact.json), [전용 스키마](compact-report.schema.json)를 참고하세요. `index.json`의 `compactReportFile`은 각 시나리오의 전용 JSON 경로입니다. 전체 API 응답과 기존 `--format json`은 유지합니다.
 
 ## 본문 예시 읽는 방법
 
@@ -27,7 +27,7 @@ CLI `--format compact-json`은 summary까지 유지하고 오류 파일만 `repo
 
 `lintFiles()`와 `checkFiles()`는 아래 결과를 그대로 반환합니다. **알림 목적이므로 passed가 false여도 예외를 던지지 않으며 다음 단계로 진행합니다.** `exitCode`는 report의 분류 값이고, 예제 프로세스는 이 값을 종료 코드로 적용하지 않습니다. `formatReport(report)`의 콘솔 출력도 각 예시에 함께 적었습니다. 출력의 PASS/FAIL도 검사 기준 표시이며 빌드 중단을 의미하지 않습니다.
 
-`report.version: 1`은 결과 스키마 버전이며 패키지 버전(2.2.0)과 다릅니다.
+`report.version: 1`은 결과 스키마 버전이며 패키지 버전(2.2.1)과 다릅니다.
 
 ## 정상
 

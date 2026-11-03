@@ -15,7 +15,9 @@
     "errorFiles": [
       {
         "filePath": "/project/src/valid.js",
-        "errorMessage": "Cannot find module '/project/config/not-found.cjs'\nRequire stack:\n- /project/tools/std-lint/index.cjs\n- /project/scripts/generate-report-examples.cjs"
+        "errorMessages": [
+          "Cannot find module '/project/config/not-found.cjs'\nRequire stack:\n- /project/tools/std-lint/index.cjs\n- /project/scripts/generate-report-examples.cjs"
+        ]
       }
     ]
   }

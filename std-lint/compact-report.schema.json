@@ -21,10 +21,10 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["filePath", "errorMessage"],
+            "required": ["filePath", "errorMessages"],
             "properties": {
               "filePath": { "type": "string" },
-              "errorMessage": { "type": "string" }
+              "errorMessages": { "type": "array", "minItems": 1, "items": { "type": "string" } }
             }
           }
         }

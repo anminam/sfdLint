@@ -30,7 +30,7 @@ npm run lint:notify
 npm run --silent lint:notify -- --format compact-json
 ```
 
-기존 `version`, `passed`, `exitCode`, `summary`는 유지하고, `files`·`issues` 대신 `report: { isError, errorFiles: [{ filePath, errorMessage }] }`를 반환합니다. 경고는 `errorFiles`에서 제외하고, 한 파일의 여러 오류는 `errorMessage` 안에서 줄바꿈으로 합칩니다. 경고 집계는 summary에 유지합니다. [전체 전용 JSON 예시와 execSync 사용법](std-lint/CLI.md#오류-파일만-담은-전용-json)
+기존 `version`, `passed`, `exitCode`, `summary`는 유지하고, `files`·`issues` 대신 `report: { isError, errorFiles: [{ filePath, errorMessages }] }`를 반환합니다. 경고는 `errorFiles`에서 제외하고, 한 파일의 여러 오류는 `errorMessages` 문자열 배열에 각각 담습니다. 경고 집계는 summary에 유지합니다. [전체 전용 JSON 예시와 execSync 사용법](std-lint/CLI.md#오류-파일만-담은-전용-json)
 
 ### 1. 폴더 복사하기
 
@@ -430,7 +430,7 @@ npm test
 npm run release
 ```
 
-테스트와 배포에도 npm 의존성 설치가 필요 없습니다. `npm run release`는 `dist/std-lint-2.2.0/std-lint/` 폴더와 `dist/std-lint-2.2.0.tar.gz`를 만듭니다. 복사해서 쓸 코드는 `std-lint/` 안에만 있습니다.
+테스트와 배포에도 npm 의존성 설치가 필요 없습니다. `npm run release`는 `dist/std-lint-2.2.1/std-lint/` 폴더와 `dist/std-lint-2.2.1.tar.gz`를 만듭니다. 복사해서 쓸 코드는 `std-lint/` 안에만 있습니다.
 
 ## Git으로 업데이트하기
 

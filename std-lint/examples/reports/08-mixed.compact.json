@@ -15,15 +15,21 @@
     "errorFiles": [
       {
         "filePath": "/project/src/invalid.js",
-        "errorMessage": "'notRegistered' is not defined."
+        "errorMessages": [
+          "'notRegistered' is not defined."
+        ]
       },
       {
         "filePath": "/project/src/syntax-error.js",
-        "errorMessage": "Parsing error: Unexpected token ;"
+        "errorMessages": [
+          "Parsing error: Unexpected token ;"
+        ]
       },
       {
         "filePath": "/project/src/missing.js",
-        "errorMessage": "ENOENT: no such file or directory, open '/project/src/missing.js'"
+        "errorMessages": [
+          "ENOENT: no such file or directory, open '/project/src/missing.js'"
+        ]
       }
     ]
   }

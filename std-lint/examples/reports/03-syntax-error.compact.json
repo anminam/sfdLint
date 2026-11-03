@@ -15,7 +15,9 @@
     "errorFiles": [
       {
         "filePath": "/project/src/syntax-error.js",
-        "errorMessage": "Parsing error: Unexpected token ;"
+        "errorMessages": [
+          "Parsing error: Unexpected token ;"
+        ]
       }
     ]
   }

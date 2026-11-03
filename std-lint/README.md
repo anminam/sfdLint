@@ -150,7 +150,7 @@ console.log(formatReport(report));
 
 파싱 가능한 실제 응답 파일은 [examples/reports/](examples/reports/), 입력·옵션 목록은 [index.json](examples/reports/index.json)에 있습니다. 반환 형식은 [report.schema.json](report.schema.json)(JSON Schema Draft-07)으로 제공합니다. 스키마는 필드 구조를 검증하며 오류 수의 합계나 실제 빌드 실행 여부까지 검증하지는 않습니다. `index.json`의 실행 정책 정보는 report 응답 필드와 구분됩니다.
 
-CLI에서만 간단한 응답이 필요하면 `--format compact-json`을 지정하세요. summary까지 유지하고 `report: { isError, errorFiles: [{ filePath, errorMessage }] }`를 반환합니다. 경고는 상세 목록에서 제외하고 같은 파일의 오류는 줄바꿈으로 합칩니다. [CLI 사용법과 JSON 예시](CLI.md#오류-파일만-담은-전용-json), [전용 스키마](compact-report.schema.json)를 참고하세요.
+CLI에서만 간단한 응답이 필요하면 `--format compact-json`을 지정하세요. summary까지 유지하고 `report: { isError, errorFiles: [{ filePath, errorMessages }] }`를 반환합니다. 경고는 상세 목록에서 제외하고 같은 파일의 오류는 `errorMessages` 문자열 배열에 각각 담습니다. [CLI 사용법과 JSON 예시](CLI.md#오류-파일만-담은-전용-json), [전용 스키마](compact-report.schema.json)를 참고하세요.
 
 ```js
 {

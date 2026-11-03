@@ -15,7 +15,9 @@
     "errorFiles": [
       {
         "filePath": "/project/src/invalid.js",
-        "errorMessage": "'notRegistered' is not defined."
+        "errorMessages": [
+          "'notRegistered' is not defined."
+        ]
       }
     ]
   }

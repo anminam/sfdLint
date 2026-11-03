@@ -138,7 +138,10 @@ node tool/std-lint/cli.cjs --file-list ./build/temp_files.txt --cwd .. --config 
     "errorFiles": [
       {
         "filePath": "/workspace/aa/bb/cc.js",
-        "errorMessage": "'a' is not defined.\n'b' is not defined."
+        "errorMessages": [
+          "'a' is not defined.",
+          "'b' is not defined."
+        ]
       }
     ]
   }
@@ -147,8 +150,8 @@ node tool/std-lint/cli.cjs --file-list ./build/temp_files.txt --cwd .. --config 
 
 - `report.isError`는 오류 또는 검사 실행 문제가 하나라도 있으면 `true`입니다. 경고만 있으면 `false`입니다.
 - `errorFiles`는 오류가 있는 파일만 입력 순서대로 담습니다. 경고와 정상 파일은 제외합니다.
-- 파일별 `errorMessage`는 severity 2인 오류 메시지를 `\n`으로 합칩니다. 문법 오류도 포함합니다.
-- 파일 읽기·설정 문제는 기존 `issues`의 메시지를 해당 파일의 `errorMessage`로 합칩니다.
+- 파일별 `errorMessages`는 severity 2인 오류 메시지 문자열의 배열입니다. 오류 하나당 항목 하나를 담고 문법 오류도 포함합니다.
+- 파일 읽기·설정 문제는 기존 `issues`의 메시지를 해당 파일의 `errorMessages` 배열에 추가합니다.
 - 경고는 상세 목록에서 제외하지만 기존 `summary.warningCount`는 유지합니다. 경고만 있으면 `report`는 `{ "isError": false, "errorFiles": [] }`입니다.
 - 파일 경로는 기존 응답처럼 절대 경로입니다. 이 형식도 알림용이며 프로세스는 정상 종료(0)합니다.
 

@@ -15,7 +15,9 @@
     "errorFiles": [
       {
         "filePath": "/project/src/missing.js",
-        "errorMessage": "ENOENT: no such file or directory, open '/project/src/missing.js'"
+        "errorMessages": [
+          "ENOENT: no such file or directory, open '/project/src/missing.js'"
+        ]
       }
     ]
   }

@@ -15,7 +15,7 @@ function toCompactReport(result) {
   }
   const errorFiles = [...errorsByFile]
     .filter(([, messages]) => messages.length > 0)
-    .map(([filePath, messages]) => ({ filePath, errorMessage: messages.join('\n') }));
+    .map(([filePath, messages]) => ({ filePath, errorMessages: messages }));
   return {
     version: result.version,
     passed: result.passed,

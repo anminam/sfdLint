@@ -73,9 +73,10 @@ test('CLI and npm build hook use aa-prefixed lists without blocking subsequent b
   assert.deepEqual(compact.report.errorFiles.map(file => file.filePath), [
     path.join(project, 'cc/multiple.js'), path.join(project, 'cc/syntax.js'), path.join(project, 'cc/missing.js'),
   ]);
-  assert.equal(compact.report.errorFiles[0].errorMessage, "'firstMissing' is not defined.\n'secondMissing' is not defined.");
-  assert.match(compact.report.errorFiles[1].errorMessage, /Parsing error/);
-  assert.match(compact.report.errorFiles[2].errorMessage, /ENOENT/);
+  assert.deepEqual(compact.report.errorFiles[0].errorMessages, ["'firstMissing' is not defined.", "'secondMissing' is not defined."]);
+  assert.match(compact.report.errorFiles[1].errorMessages[0], /Parsing error/);
+  assert.match(compact.report.errorFiles[2].errorMessages[0], /ENOENT/);
+  assert.equal(Object.hasOwn(compact.report.errorFiles[0], 'errorMessage'), false);
   assert.deepEqual(JSON.parse(await fs.readFile(path.join(project, 'compact-result.json'), 'utf8')), compact);
   await fs.writeFile(path.join(project, 'build/warning.txt'), 'aa/cc/warning.js');
   const warningOutput = run([...base, '--file-list', './build/warning.txt', '--format', 'compact-json']);
