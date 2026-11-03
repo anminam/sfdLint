@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "passed": false,
+  "exitCode": 1,
+  "summary": {
+    "fileCount": 1,
+    "lintedFileCount": 1,
+    "failedFileCount": 0,
+    "errorCount": 1,
+    "warningCount": 0,
+    "fatalErrorCount": 0
+  },
+  "report": {
+    "isError": true,
+    "errorFiles": [
+      {
+        "filePath": "/project/src/invalid.js",
+        "errorMessage": "'notRegistered' is not defined."
+      }
+    ]
+  }
+}

@@ -101,8 +101,8 @@ console.log(lintOutput); // execSync가 반환한 stdout을 출력해야 알림�
 | `--file-list` | `./temp_files.txt` | 목록 파일 경로 |
 | `--cwd` | 명령 실행 폴더 | 목록 안의 상대 파일 경로 기준 |
 | `--config` | 자동 탐색 | 사용할 ESLint 형식 설정 파일 |
-| `--format` | `text` | stdout 형식: `text` 또는 `json` |
-| `--report` | 없음 | report JSON을 추가로 저장할 경로 |
+| `--format` | `text` | stdout 형식: `text`, `json`, `compact-json` |
+| `--report` | 없음 | JSON 저장 경로. compact-json 선택 시 전용 형식, 나머지는 전체 형식 |
 | `--help` | 없음 | 도움말 |
 
 **`--file-list`, `--config`, `--report`의 상대 경로는 명령을 실행한 폴더 기준**입니다. `--cwd`는 목록 안의 경로 기준만 바꿉니다. `--config`를 생략하면 각 대상 파일 상위에서 `stdLintConfig.js`, `.cjs`, `.mjs`를 탐색합니다.
@@ -116,7 +116,70 @@ node tool/std-lint/cli.cjs --file-list ./build/temp_files.txt --cwd .. --config 
 
 정상적으로 검사를 시작하면 [기존 report 형식](README.md#반환-형식)을 그대로 출력합니다. `report.passed: false`, `report.exitCode: 1/2`여도 CLI 프로세스 종료 코드는 0입니다.
 
-목록 파일 읽기·파싱 문제 또는 vendor 누락으로 검사를 시작하지 못하면 stderr에 이유를 출력합니다. `--format json`이 적용된 상태에서는 stdout에 `null`을 출력합니다. `--report`를 지정했다면 그 경우 JSON 파일에도 `null`을 저장합니다. report 저장 경로는 목록·소스·설정 파일과 다른 경로로 지정하고 상위 폴더는 미리 만들어 두세요. 저장 실패도 stderr로 알리고 빌드는 계속 진행합니다.
+### 오류 파일만 담은 전용 JSON
+
+`--format compact-json`을 지정하면 `version`, `passed`, `exitCode`, `summary`는 기존 값 그대로 두고, 기존 `files`·`issues` 대신 아래 `report`를 반환합니다. 예를 들어 파일 3개 중 한 파일에 오류 2개, 다른 파일에 경고 1개가 있으면 다음 형태입니다.
+
+```json
+{
+  "version": 1,
+  "passed": false,
+  "exitCode": 1,
+  "summary": {
+    "fileCount": 3,
+    "lintedFileCount": 3,
+    "failedFileCount": 0,
+    "errorCount": 2,
+    "warningCount": 1,
+    "fatalErrorCount": 0
+  },
+  "report": {
+    "isError": true,
+    "errorFiles": [
+      {
+        "filePath": "/workspace/aa/bb/cc.js",
+        "errorMessage": "'a' is not defined.\n'b' is not defined."
+      }
+    ]
+  }
+}
+```
+
+- `report.isError`는 오류 또는 검사 실행 문제가 하나라도 있으면 `true`입니다. 경고만 있으면 `false`입니다.
+- `errorFiles`는 오류가 있는 파일만 입력 순서대로 담습니다. 경고와 정상 파일은 제외합니다.
+- 파일별 `errorMessage`는 severity 2인 오류 메시지를 `\n`으로 합칩니다. 문법 오류도 포함합니다.
+- 파일 읽기·설정 문제는 기존 `issues`의 메시지를 해당 파일의 `errorMessage`로 합칩니다.
+- 경고는 상세 목록에서 제외하지만 기존 `summary.warningCount`는 유지합니다. 경고만 있으면 `report`는 `{ "isError": false, "errorFiles": [] }`입니다.
+- 파일 경로는 기존 응답처럼 절대 경로입니다. 이 형식도 알림용이며 프로세스는 정상 종료(0)합니다.
+
+```sh
+node tool/std-lint/cli.cjs --file-list ./build/temp_files.txt --cwd .. --config ./config/project-lint.cjs --format compact-json
+```
+
+기존 npm script를 통해 호출할 때도 옵션만 추가하면 됩니다. `--silent`는 npm 실행 안내를 숨겨 stdout을 JSON으로 받도록 합니다.
+
+```sh
+npm run --silent lint:notify -- --format compact-json
+```
+
+`execSync`로 전용 객체를 받는 예제입니다.
+
+```js
+const { execSync } = require('node:child_process');
+
+const output = execSync('npm run --silent lint:notify -- --format compact-json', {
+  cwd: inPath,
+  encoding: 'utf8',
+  env: { ...process.env },
+});
+const result = JSON.parse(output);
+console.log(result?.report?.errorFiles ?? []);
+// 오류 유무와 관계없이 기존 빌드는 계속 진행합니다.
+```
+
+`--report ./lint-report.json`도 함께 지정하면 stdout과 동일한 전용 객체를 저장합니다. 실제 결과 파일: [여러 파일 혼합](examples/reports/08-mixed.compact.json), [경고만 있음](examples/reports/04-warning.compact.json). 형식 검증에는 [compact-report.schema.json](compact-report.schema.json)과 참조하는 [report.schema.json](report.schema.json)을 함께 사용합니다.
+
+목록 파일 읽기·파싱 문제 또는 vendor 누락으로 검사를 시작하지 못하면 stderr에 이유를 출력합니다. `--format json` 또는 `--format compact-json`이 적용된 상태에서는 stdout에 `null`을 출력합니다. `--report`를 지정했다면 그 경우 JSON 파일에도 `null`을 저장합니다. report 저장 경로는 목록·소스·설정 파일과 다른 경로로 지정하고 상위 폴더는 미리 만들어 두세요. 저장 실패도 stderr로 알리고 빌드는 계속 진행합니다.
 
 빈 목록은 파일 0개 결과를 반환합니다. 잘못된 옵션도 stderr로 알리며 정상 종료하므로, 옵션을 처음 연결할 때 출력과 검사 파일 수를 확인하세요. JSON Schema 검증은 `null`이 아닌 실제 report에 적용합니다.
 

@@ -24,6 +24,14 @@ npm run lint:notify
 
 `--cwd ..`는 목록에 포함된 `aa/`의 상위 폴더를 경로 기준으로 삼습니다. 목록·설정의 실제 위치는 옵션으로 바꾸면 됩니다. 기존 `npm run riabuild` 전에 자동 실행하는 방법, `execSync` 연결, JSON 출력도 [가이드](std-lint/CLI.md)에 있습니다. **이 CLI는 검사 오류나 목록 읽기 문제 때문에 빌드를 중단하지 않습니다.**
 
+**summary와 오류 파일만 필요하면** 다음 전용 출력 옵션을 추가하세요.
+
+```sh
+npm run --silent lint:notify -- --format compact-json
+```
+
+기존 `version`, `passed`, `exitCode`, `summary`는 유지하고, `files`·`issues` 대신 `report: { isError, errorFiles: [{ filePath, errorMessage }] }`를 반환합니다. 경고는 `errorFiles`에서 제외하고, 한 파일의 여러 오류는 `errorMessage` 안에서 줄바꿈으로 합칩니다. 경고 집계는 summary에 유지합니다. [전체 전용 JSON 예시와 execSync 사용법](std-lint/CLI.md#오류-파일만-담은-전용-json)
+
 ### 1. 폴더 복사하기
 
 GitHub의 **Code → Download ZIP**으로 내려받거나 이 저장소를 clone합니다. 내려받은 저장소 안에서 **`vendor`가 들어 있는 `std-lint/` 폴더 전체**를 프로젝트의 `tools/std-lint/`로 복사하세요. `vendor/node_modules`도 반드시 포함합니다. 프로젝트에서 npm 설치나 네트워크 접속은 필요 없습니다.
@@ -384,7 +392,9 @@ node std-lint/examples/json-report.cjs src/valid.js src/invalid.js src/syntax-er
 npm run examples:reports
 ```
 
-`npm run examples:reports`는 저장소 개발용 명령으로, 제공된 8개 시나리오를 다시 검사하고 JSON Schema 및 집계를 검증한 뒤 `std-lint/examples/reports/`에 저장합니다. 경로는 공유하기 쉽도록 `/project`로 치환합니다. 런타임 API와 `json-report.cjs`는 실제 절대 경로를 반환합니다. 외부 패키지 설치는 필요 없습니다.
+`npm run examples:reports`는 저장소 개발용 명령으로, 제공된 8개 시나리오의 전체·전용 JSON을 다시 만들고 JSON Schema 및 집계를 검증한 뒤 `std-lint/examples/reports/`에 저장합니다. 경로는 공유하기 쉽도록 `/project`로 치환합니다. 런타임 API와 `json-report.cjs`는 실제 절대 경로를 반환합니다. 외부 패키지 설치는 필요 없습니다.
+
+오류 파일만 모은 전용 결과는 [08-mixed.compact.json](std-lint/examples/reports/08-mixed.compact.json)과 [compact-report.schema.json](std-lint/compact-report.schema.json)을 참고하세요. 각 시나리오의 전용 파일 이름은 `index.json`의 `compactReportFile`에 있습니다.
 
 ## 매뉴얼과 실행 예제
 
@@ -420,7 +430,7 @@ npm test
 npm run release
 ```
 
-테스트와 배포에도 npm 의존성 설치가 필요 없습니다. `npm run release`는 `dist/std-lint-2.1.0/std-lint/` 폴더와 `dist/std-lint-2.1.0.tar.gz`를 만듭니다. 복사해서 쓸 코드는 `std-lint/` 안에만 있습니다.
+테스트와 배포에도 npm 의존성 설치가 필요 없습니다. `npm run release`는 `dist/std-lint-2.2.0/std-lint/` 폴더와 `dist/std-lint-2.2.0.tar.gz`를 만듭니다. 복사해서 쓸 코드는 `std-lint/` 안에만 있습니다.
 
 ## Git으로 업데이트하기
 

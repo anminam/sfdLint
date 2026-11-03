@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "passed": false,
+  "exitCode": 1,
+  "summary": {
+    "fileCount": 1,
+    "lintedFileCount": 1,
+    "failedFileCount": 0,
+    "errorCount": 0,
+    "warningCount": 1,
+    "fatalErrorCount": 0
+  },
+  "report": {
+    "isError": false,
+    "errorFiles": []
+  }
+}

@@ -2,8 +2,9 @@
   "catalogVersion": 1,
   "reportSchemaVersion": 1,
   "reportSchema": "../../report.schema.json",
+  "compactReportSchema": "../../compact-report.schema.json",
   "generator": {
-    "packageVersion": "2.1.0",
+    "packageVersion": "2.2.0",
     "eslintVersion": "10.14.0",
     "nodeVersion": "24.22.2"
   },
@@ -17,6 +18,7 @@
       "id": "01-success",
       "title": "정상",
       "reportFile": "01-success.json",
+      "compactReportFile": "01-success.compact.json",
       "input": {
         "filePaths": [
           "src/valid.js"
@@ -37,6 +39,7 @@
       "id": "02-rule-error",
       "title": "규칙 오류 알림",
       "reportFile": "02-rule-error.json",
+      "compactReportFile": "02-rule-error.compact.json",
       "input": {
         "filePaths": [
           "src/invalid.js"
@@ -57,6 +60,7 @@
       "id": "03-syntax-error",
       "title": "문법 오류 알림",
       "reportFile": "03-syntax-error.json",
+      "compactReportFile": "03-syntax-error.compact.json",
       "input": {
         "filePaths": [
           "src/syntax-error.js"
@@ -77,6 +81,7 @@
       "id": "04-warning",
       "title": "경고 알림",
       "reportFile": "04-warning.json",
+      "compactReportFile": "04-warning.compact.json",
       "input": {
         "filePaths": [
           "src/warning.js"
@@ -97,6 +102,7 @@
       "id": "05-warning-classified",
       "title": "경고를 위반으로 분류",
       "reportFile": "05-warning-classified.json",
+      "compactReportFile": "05-warning-classified.compact.json",
       "input": {
         "filePaths": [
           "src/warning.js"
@@ -118,6 +124,7 @@
       "id": "06-missing-file",
       "title": "입력 파일 없음",
       "reportFile": "06-missing-file.json",
+      "compactReportFile": "06-missing-file.compact.json",
       "input": {
         "filePaths": [
           "src/missing.js"
@@ -138,6 +145,7 @@
       "id": "07-missing-config",
       "title": "설정 파일 없음",
       "reportFile": "07-missing-config.json",
+      "compactReportFile": "07-missing-config.compact.json",
       "input": {
         "filePaths": [
           "src/valid.js"
@@ -158,6 +166,7 @@
       "id": "08-mixed",
       "title": "여러 파일의 정상·규칙·문법·경고·실행 문제",
       "reportFile": "08-mixed.json",
+      "compactReportFile": "08-mixed.compact.json",
       "input": {
         "filePaths": [
           "src/valid.js",

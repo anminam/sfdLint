@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "passed": false,
+  "exitCode": 2,
+  "summary": {
+    "fileCount": 5,
+    "lintedFileCount": 4,
+    "failedFileCount": 1,
+    "errorCount": 2,
+    "warningCount": 1,
+    "fatalErrorCount": 1
+  },
+  "report": {
+    "isError": true,
+    "errorFiles": [
+      {
+        "filePath": "/project/src/invalid.js",
+        "errorMessage": "'notRegistered' is not defined."
+      },
+      {
+        "filePath": "/project/src/syntax-error.js",
+        "errorMessage": "Parsing error: Unexpected token ;"
+      },
+      {
+        "filePath": "/project/src/missing.js",
+        "errorMessage": "ENOENT: no such file or directory, open '/project/src/missing.js'"
+      }
+    ]
+  }
+}

@@ -7,13 +7,18 @@ const { checkFiles } = require('../std-lint');
 // Development-only schema validation with the already vendored dependency.
 const Ajv = require('../std-lint/vendor/node_modules/ajv');
 const schema = require('../std-lint/report.schema.json');
+const compactSchema = require('../std-lint/compact-report.schema.json');
+const { toCompactReport } = require('../std-lint/compact-report.cjs');
 
 async function main() {
   const root = path.resolve(__dirname, '..');
   const moduleRoot = path.join(root, 'std-lint');
   const cwd = path.join(moduleRoot, 'examples');
   const outputDirectory = path.join(cwd, 'reports');
-  const validate = new Ajv({ allErrors: true }).compile(schema);
+  const ajv = new Ajv({ allErrors: true });
+  ajv.addSchema(schema, 'report.schema.json');
+  const validate = ajv.getSchema('report.schema.json');
+  const validateCompact = ajv.compile(compactSchema);
   const defaults = { configFile: './config/project-lint.cjs' };
   const scenarios = [
     ['01-success', '정상', ['src/valid.js'], {}, 0],
@@ -29,6 +34,7 @@ async function main() {
     catalogVersion: 1,
     reportSchemaVersion: 1,
     reportSchema: '../../report.schema.json',
+    compactReportSchema: '../../compact-report.schema.json',
     generator: {
       packageVersion: require('../std-lint/package.json').version,
       eslintVersion: require('../std-lint/vendor/node_modules/eslint/package.json').version,
@@ -59,8 +65,11 @@ async function main() {
     const json = normalize(JSON.stringify(actual, null, 2)) + '\n';
     assert(validate(JSON.parse(json)), `${id}: ${JSON.stringify(validate.errors)}`);
     files.push([`${id}.json`, json]);
+    const compact = toCompactReport(JSON.parse(json));
+    assert(validateCompact(compact), `${id}: ${JSON.stringify(validateCompact.errors)}`);
+    files.push([`${id}.compact.json`, JSON.stringify(compact, null, 2) + '\n']);
     index.scenarios.push({
-      id, title, reportFile: `${id}.json`,
+      id, title, reportFile: `${id}.json`, compactReportFile: `${id}.compact.json`,
       input: { filePaths, options: { cwd: '/project', ...options } },
       expected: { passed: actual.passed, reportExitCode: actual.exitCode, processExitCode: 0, continuePipeline: true },
     });
@@ -68,7 +77,7 @@ async function main() {
   await fs.mkdir(outputDirectory, { recursive: true });
   for (const [name, json] of files) await fs.writeFile(path.join(outputDirectory, name), json);
   await fs.writeFile(path.join(outputDirectory, 'index.json'), JSON.stringify(index, null, 2) + '\n');
-  console.log(`Generated and schema-validated ${files.length} real report examples.`);
+  console.log(`Generated and schema-validated ${scenarios.length} full and ${scenarios.length} compact report examples.`);
 }
 
 main().catch(error => { console.error(error); process.exitCode = 1; });
