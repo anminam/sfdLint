@@ -4,7 +4,7 @@
   "reportSchema": "../../report.schema.json",
   "compactReportSchema": "../../compact-report.schema.json",
   "generator": {
-    "packageVersion": "2.2.1",
+    "packageVersion": "2.2.2",
     "eslintVersion": "10.14.0",
     "nodeVersion": "24.22.2"
   },

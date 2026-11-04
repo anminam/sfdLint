@@ -54,7 +54,7 @@
       "properties": {
         "filePath": { "type": "string" },
         "configFile": { "$ref": "#/definitions/configPath" },
-        "status": { "type": "string", "enum": ["linted", "failed"] },
+        "status": { "type": "string", "enum": ["linted", "failed", "ignored"] },
         "errorCount": { "$ref": "#/definitions/count" },
         "warningCount": { "$ref": "#/definitions/count" },
         "fatalErrorCount": { "$ref": "#/definitions/count" },

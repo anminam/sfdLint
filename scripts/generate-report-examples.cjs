@@ -57,7 +57,8 @@ async function main() {
     const actual = await checkFiles(filePaths, { cwd, ...options });
     assert.equal(actual.exitCode, expectedCode, id);
     assert.equal(actual.summary.fileCount, actual.files.length, id);
-    assert.equal(actual.summary.lintedFileCount + actual.summary.failedFileCount, actual.summary.fileCount, id);
+    const ignoredCount = actual.files.filter(file => file.status === 'ignored').length;
+    assert.equal(actual.summary.lintedFileCount + actual.summary.failedFileCount + ignoredCount, actual.summary.fileCount, id);
     assert.equal(actual.summary.errorCount, actual.files.reduce((sum, f) => sum + f.errorCount, 0), id);
     assert.equal(actual.summary.warningCount, actual.files.reduce((sum, f) => sum + f.warningCount, 0), id);
     assert.equal(actual.summary.fatalErrorCount, actual.files.reduce((sum, f) => sum + f.fatalErrorCount, 0), id);

@@ -1,5 +1,11 @@
 # 변경 이력
 
+## 2.2.2 (2026-11-04)
+
+- HTML·텍스트 등 비 JavaScript 파일과 ESLint 제외 파일을 오류 대신 `status: 'ignored'`로 처리.
+- 매칭 설정 없음 알림을 issues/errorFiles와 isError에서 제외. 실제 JavaScript 오류는 계속 보고.
+- summary 필드 구조는 유지하며 무시한 파일은 전체 fileCount에만 포함.
+
 ## 2.2.1 (2026-11-03)
 
 - 전용 JSON의 `errorMessage` 문자열을 `errorMessages` 문자열 배열로 변경.

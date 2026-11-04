@@ -141,7 +141,8 @@ console.log(formatReport(report));
 - `configFile`: 선택 사항입니다. 상대 경로는 `cwd` 기준입니다. 지정하면 모든 파일에 동일한 설정을 적용합니다. 프로젝트 빌드에서는 이 옵션으로 설정을 명시하는 것을 권장합니다.
 - 생략하면 각 대상 파일의 폴더부터 파일시스템 루트까지 올라가며 가장 가까운 `stdLintConfig.js`, `.cjs`, `.mjs`를 찾습니다. 같은 폴더에 여러 개면 이 순서로 선택합니다. 설정이 없으면 실패합니다.
 - 파일 읽기·설정 오류가 있어도 나머지 파일을 계속 검사합니다. 자동 수정은 하지 않습니다. 일반 ESLint inline 주석은 ESLint 기준으로 적용됩니다.
-- `ignorePatterns`나 ESLint 기본 제외 대상 때문에 입력 파일이 검사되지 않으면 `FILE_NOT_LINTED` 실패로 처리합니다. 검사에서 제외할 파일은 호출자가 배열에서 빼주세요.
+- 검사 대상은 `.js`, `.cjs`, `.mjs`, `.jsx`입니다. HTML·텍스트·CSS 등 다른 확장자는 파일 읽기나 설정 탐색 전에 무시합니다. ESLint가 ignore 설정이나 매칭 설정 없음으로 제외한 파일도 오류로 처리하지 않습니다.
+- 무시한 파일은 전체 응답에서 `status: 'ignored'`, 빈 `messages`, 오류·경고 개수 0으로 표시합니다. `issues`와 compact-json의 `errorFiles`에 넣지 않으며 `isError`에도 영향을 주지 않습니다. `fileCount`에는 포함하지만 `lintedFileCount`와 `failedFileCount`에는 포함하지 않습니다. summary의 기존 필드 구조는 유지합니다.
 - 설정 진입 파일은 호출마다 다시 읽습니다. 설정에서 import/require한 보조 모듈은 Node.js 캐시를 따르므로 보조 모듈 변경 후에는 프로세스를 재시작하세요.
 
 ## 반환 형식
@@ -168,7 +169,7 @@ CLI에서만 간단한 응답이 필요하면 `--format compact-json`을 지정�
   files: [{
     filePath: '/project/src/app.js',
     configFile: '/project/stdLintConfig.js',
-    status: 'linted',          // 또는 failed
+    status: 'linted',          // 또는 failed / ignored
     errorCount: 1,
     warningCount: 0,
     fatalErrorCount: 0,

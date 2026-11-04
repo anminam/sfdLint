@@ -8,6 +8,7 @@ const { FlatCompat, Legacy } = require('./vendor/node_modules/@eslint/eslintrc')
 const js = require('./vendor/node_modules/@eslint/js');
 
 const CONFIG_NAMES = ['stdLintConfig.js', 'stdLintConfig.cjs', 'stdLintConfig.mjs'];
+const JS_EXTENSIONS = new Set(['.js', '.cjs', '.mjs', '.jsx']);
 
 class StdLintError extends Error {
   constructor(report) {
@@ -88,9 +89,8 @@ async function createEngine(configPath, cwd) {
   return new ESLint({
     cwd,
     overrideConfigFile: true,
-    // ESLint core normally targets JS extensions. Here every explicit input
-    // file must be inspected, including .jsx and nonstandard JS extensions.
-    overrideConfig: [{ files: ['**/*'] }, ...compat.config(config)],
+    // A build manifest can contain assets. Only JavaScript targets participate.
+    overrideConfig: [{ files: ['**/*.{js,cjs,mjs,jsx}'] }, ...compat.config(config)],
     fix: false,
   });
 }
@@ -123,7 +123,22 @@ async function lintFiles(filePaths, options = {}) {
   for (const filePath of inputs) {
     let configPath = explicitConfig;
     let stage = 'read';
+    const ignoreFile = () => files.push({
+      filePath, configFile: configPath, status: 'ignored',
+      errorCount: 0, warningCount: 0, fatalErrorCount: 0, messages: [],
+    });
     try {
+      if (!JS_EXTENSIONS.has(path.extname(filePath))) {
+        // Keep directory inputs as input errors without reading asset contents.
+        const stat = await fs.stat(filePath).catch(() => null);
+        if (stat?.isDirectory()) {
+          const error = new Error('검사 대상에 폴더 경로를 사용할 수 없습니다. 파일 경로를 지정하세요.');
+          error.code = 'EISDIR';
+          throw error;
+        }
+        ignoreFile();
+        continue;
+      }
       const source = await fs.readFile(filePath, 'utf8');
       stage = 'config';
       configPath = configPath || await findConfig(filePath);
@@ -137,10 +152,14 @@ async function lintFiles(filePaths, options = {}) {
       if (!engines.has(engineKey)) engines.set(engineKey, createEngine(configPath, lintRoot));
       const engine = await engines.get(engineKey);
       stage = 'lint';
+      if (await engine.isPathIgnored(filePath)) {
+        ignoreFile();
+        continue;
+      }
       const results = await engine.lintText(source, { filePath, warnIgnored: true });
       const result = results[0];
-      if (!result || (result.messages.length > 0 && result.messages.every(m => m.ruleId === null && !m.fatal && m.severity === 1))) {
-        const error = new Error(result?.messages.map(m => m.message).join(' ') || 'ESLint가 파일을 검사하지 않았습니다.');
+      if (!result) {
+        const error = new Error('ESLint가 검사 결과를 반환하지 않았습니다.');
         error.code = 'FILE_NOT_LINTED';
         throw error;
       }

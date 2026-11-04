@@ -1,6 +1,6 @@
 {
   "name": "std-lint",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "private": true,
   "type": "commonjs",
   "scripts": { "lint:notify": "node cli.cjs" },

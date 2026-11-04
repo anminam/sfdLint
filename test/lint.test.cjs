@@ -97,13 +97,43 @@ test('ESM API and ESM config in a type:module project', async t => {
   assert.equal((await esm.lintFiles([file])).summary.errorCount, 2);
 });
 
-test('ignored inputs fail closed; glob strings are not expanded', async t => {
+test('ESLint-ignored inputs are skipped without findings; glob strings are not expanded', async t => {
   const f = await fixture(t, { ignorePatterns: ['ignored.js'] });
   const file = await f.write('ignored.js', 'unknownThing();');
   const report = await api.lintFiles([file], { cwd: f.directory });
-  assert.equal(report.exitCode, 2);
-  assert.equal(report.issues[0].code, 'FILE_NOT_LINTED');
+  assert.equal(report.exitCode, 0);
+  assert.equal(report.files[0].status, 'ignored');
+  assert.equal(report.summary.lintedFileCount, 0);
+  assert.equal(report.summary.failedFileCount, 0);
+  assert.deepEqual(report.issues, []);
+  assert.deepEqual(report.files[0].messages, []);
   assert.equal((await api.lintFiles(['*.js'], { cwd: f.directory })).exitCode, 2);
+});
+
+test('non-JavaScript assets never become parse/config/read errors while actual JS errors remain', async t => {
+  const f = await fixture(t);
+  const text = await f.write('readme.txt', 'arbitrary text which is not JavaScript');
+  const html = await f.write('page.html', '<!doctype html><h1>Example</h1>');
+  const missingAsset = path.join(f.directory, 'missing.png');
+  const good = await f.write('good.js', 'window.alert(STD);');
+  const syntax = await f.write('syntax.js', 'const = ;');
+  const report = await api.checkFiles([text, html, missingAsset, good, syntax]);
+  assert.equal(report.summary.fileCount, 5);
+  assert.equal(report.summary.lintedFileCount, 2);
+  assert.equal(report.summary.failedFileCount, 0);
+  assert.equal(report.summary.errorCount, 1);
+  assert.equal(report.summary.fatalErrorCount, 1);
+  assert.equal(report.summary.warningCount, 0);
+  assert.deepEqual(report.files.map(file => file.status), ['ignored', 'ignored', 'ignored', 'linted', 'linted']);
+  assert.deepEqual(report.issues, []);
+  const { toCompactReport } = require('../std-lint/compact-report.cjs');
+  const compact = toCompactReport(report);
+  assert.equal(compact.report.isError, true);
+  assert.deepEqual(compact.report.errorFiles.map(file => file.filePath), [syntax]);
+  await fs.unlink(path.join(f.directory, 'stdLintConfig.js'));
+  const assetsOnly = await api.checkFiles([text, html, missingAsset]);
+  assert.equal(assetsOnly.passed, true);
+  assert.deepEqual(toCompactReport(assetsOnly).report, { isError: false, errorFiles: [] });
 });
 
 test('missing config and invalid API inputs', async t => {

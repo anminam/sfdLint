@@ -85,6 +85,24 @@ test('CLI and npm build hook use aa-prefixed lists without blocking subsequent b
   assert.equal(warningCompact.summary.warningCount, 1);
   assert.deepEqual(warningCompact.report, { isError: false, errorFiles: [] });
 
+  // Build manifests may contain HTML/text/assets; these are not JavaScript errors.
+  await fs.writeFile(path.join(project, 'bb/page.html'), '<!doctype html><h1>Example</h1>');
+  await fs.writeFile(path.join(project, 'bb/readme.txt'), 'plain text, not valid JavaScript');
+  await fs.writeFile(path.join(project, 'build/assets.txt'), 'aa/bb/page.html, aa/bb/readme.txt, aa/bb/missing.css');
+  const assets = run([...base, '--file-list', './build/assets.txt', '--format', 'compact-json']);
+  assert.equal(assets.status, 0);
+  const assetsReport = JSON.parse(assets.stdout);
+  assert.deepEqual(assetsReport.report, { isError: false, errorFiles: [] });
+  assert.equal(assetsReport.summary.errorCount, 0);
+  assert.equal(assetsReport.summary.failedFileCount, 0);
+  assert.equal(assetsReport.summary.warningCount, 0);
+  await fs.writeFile(path.join(project, 'build/mixed-assets.txt'), 'aa/bb/page.html, aa/bb/readme.txt, aa/bb/good.js, aa/cc/bad.js, aa/cc/syntax.js');
+  const mixedAssets = run([...base, '--file-list', './build/mixed-assets.txt', '--format', 'compact-json']);
+  assert.equal(mixedAssets.status, 0);
+  assert.deepEqual(JSON.parse(mixedAssets.stdout).report.errorFiles.map(file => file.filePath), [
+    path.join(project, 'cc/bad.js'), path.join(project, 'cc/syntax.js'),
+  ]);
+
   const noConfig = run([...base, '--config', './config/absent.cjs', '--format', 'json']);
   assert.equal(noConfig.status, 0);
   assert.equal(JSON.parse(noConfig.stdout).exitCode, 2);

@@ -135,7 +135,7 @@ node std-lint/examples/json-report.cjs src/valid.js src/invalid.js src/syntax-er
 - `import and export may appear only with sourceType: module`: 실행 파일이 `.cjs`인 것과 관계없이, 사용 중인 설정의 `parserOptions.sourceType`을 `'module'`로 지정하세요. 기존에 복사해 둔 설정은 직접 변경해야 합니다. 일부 파일에만 필요하면 ESLint `overrides`로 구분할 수 있습니다.
 - `CONFIG_NOT_FOUND`: `configFile`을 지정하거나 기본 이름의 설정을 대상 파일 상위에 두세요.
 - `ENOENT`: 파일 경로와 `cwd`를 확인하세요. 파일 배열에 폴더나 `src/*.js` 같은 glob을 넣으면 안 됩니다.
-- `FILE_NOT_LINTED`: ignore 설정 또는 ESLint 기본 제외 대상인지 확인하고, 제외할 파일은 입력 배열에서 빼세요.
+- HTML·텍스트 등 비 JavaScript 파일과 ESLint 제외 파일은 자동으로 무시하며 오류 목록에 넣지 않습니다. 전체 응답의 `status: 'ignored'`로 구분할 수 있습니다.
 - `module.exports`/`export` 관련 오류: `.cjs`는 CommonJS, `.mjs`는 ESM으로 작성하세요. `.js`는 프로젝트의 `package.json` 설정을 따릅니다.
 - Uglify가 실패했는데 lint는 통과함: `parserOptions.ecmaVersion`을 Uglify 지원 문법에 맞추고 실제 압축 오류도 별도로 처리하세요.
 - 외부 플러그인/파서가 없음: 현재 배포본은 ESLint 기본 규칙과 기본 파서를 포함합니다. 외부 플러그인은 별도 vendor 구성이 필요합니다.
